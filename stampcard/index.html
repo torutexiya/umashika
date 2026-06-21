@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>うましかスタンプ</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #f4f7f9; min-height: 100vh; padding-bottom: 70px; }
+
+  /* ヘッダー */
+  .header { background: #005bac; padding: 14px 16px; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; z-index: 100; gap: 12px; }
+  .header-illustration { font-size: 22px; display: flex; align-items: center; }
+  .header-title { color: #fff; font-size: 18px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
+
+  /* コンテンツ */
+  .container { padding: 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,91,172,0.05); margin-bottom: 16px; }
+
+  /* スタンプ表示 */
+  .points-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .points-count { font-size: 24px; font-weight: bold; color: #005bac; }
+  .points-unit { font-size: 14px; color: #666; margin-left: 4px; }
+  
+  /* グリッド */
+  .stamps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .stamp-slot { aspect-ratio: 1; border-radius: 50%; background: #f8fafc; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .stamp-slot.active { background: #e0f2fe; border: 2px solid #005bac; }
+  .stamp-img { width: 90%; height: 90%; object-fit: contain; display: none; }
+  .stamp-slot.active .stamp-img { display: block; }
+  
+  /* タブ */
+  .tabs { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #e2e8f0; }
+  .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; color: #94a3b8; cursor: pointer; }
+  .tab.active { color: #005bac; font-weight: bold; border-top: 2px solid #005bac; }
+
+  /* ページ制御 */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* 履歴リスト */
+  .history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 4px; border-bottom: 1px solid #f1f5f9; }
+  .history-item:last-child { border-bottom: none; }
+  .history-date { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+  .history-event { font-weight: bold; font-size: 14px; color: #2d3748; }
+  .history-points { font-size: 15px; font-weight: bold; }
+  .pts-plus { color: #005bac; }
+  .pts-minus { color: #e53e3e; }
+
+  /* 特典リスト */
+  .reward-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+  .reward-name { font-size: 14px; color: #334155; }
+  .reward-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
+  .btn-use { background: #005bac; color: #fff; }
+  .btn-lock { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+  /* 未読取クーポンリスト */
+  .active-coupon-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+  .active-coupon-item:last-child { border-bottom: none; }
+  .active-coupon-name { font-size: 13px; color: #1e3a8a; font-weight: bold; }
+  .btn-resume { padding: 5px 12px; background: #005bac; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+  /* 注意書きエリアのスタイル */
+  .reward-notice { background: #fffdf5; border: 1px solid #fef08a; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 12px; color: #854d0e; line-height: 1.6; }
+  .notice-important { font-weight: bold; color: #9a3412; display: inline-block; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div id="loading">読み込み中...</div>
+
+<div class="header">
+  <span class="header-illustration">🐴</span>
+  <h1 class="header-title">うましかスタンプ</h1>
+  <span class="header-illustration">🦌</span>
+</div>
+
+<div class="container">
+  <div id="page-card" class="page active">
+    <div class="card">
+      <div class="points-header">
+        <span style="font-size: 14px; color: #666;">現在のポイント</span>
+        <div><span class="points-count" id="points-val">0</span><span class="points-unit">pt</span></div>
+      </div>
+      <div class="stamps-grid" id="stamps-container"></div>
+      <p style="font-size: 11px; color: #94a3b8; margin-top: 15px; text-align: center;">※10ポイントでクーポンが利用可能になります</p>
+    </div>
+  </div>
+
+  <div id="page-rewards" class="page">
+    <div class="card" id="active-coupons-card" style="display: none; border: 2px solid #005bac; background: #f0f7ff;">
+      <h3 style="margin-bottom: 10px; font-size: 14px; color: #005bac;">🎫 スタッフに提示待ちのクーポン</h3>
+      <div id="active-coupons-list"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom: 15px; font-size: 16px; color: #334155;">利用可能な特典</h3>
+      <div id="rewards-list"></div>
+
+      <div class="reward-notice">
+        ※特典を交換する際に公演を予約したお名前をご入力お願いします。<br>
+        また特典の使用は一回限りとさせていただきます。<br><br>
+        <span class="notice-important">
+          サイトを一度抜けると交換した特典が消える恐れがありますのでご使用の際に交換・ご使用をよろしくお願いいたします。<br>
+          また特典未使用のままサイトを抜けた場合でもポイントは保持されます。
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-history" class="page">
+    <div class="card">
+      <h3 style="margin-bottom: 15px; font-size: 16px; color: #334155;">ポイント履歴</h3>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <div id="page-qr" class="page">
+    <div class="card">
+      <h3 id="qr-title">クーポンを使用する</h3>
+      <p style="font-size: 13px; color: #666; margin-top: 5px;">スタッフにこの画面を提示してください</p>
+      <div id="qrcode"></div>
+      <button onclick="cancelQR()" style="margin-top:20px; width:100%; padding:12px; background:#f1f5f9; border:none; border-radius:10px; color:#64748b;">戻る</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-card" onclick="switchTab('card')">カード</div>
+  <div class="tab" id="tab-rewards" onclick="switchTab('rewards')">特典</div>
+  <div class="tab" id="tab-history" onclick="switchTab('history')">履歴</div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwWVDOD5Ip9lzPcD15MpKQuG1-8ijIRXKEfIdZAbuw59bqB8XxJJpRC6OtA4iKtVGDh/exec'; 
+
+let activeCoupons = []; 
+let currentCardData = null;
+
+// LIFFのliff.stateからパラメータを取得するヘルパー
+// liff.init()より前に呼んでおく（リダイレクト前のURLを保持）
+const _rawHref = window.location.href;
+
+function getParam(key) {
+  // 1. 通常のクエリパラメータ
+  const s = new URLSearchParams(window.location.search).get(key);
+  if (s) return s;
+
+  // 2. liff.stateをデコードして取得（最重要）
+  const liffState = new URLSearchParams(window.location.search).get('liff.state');
+  if (liffState) {
+    try {
+      const decoded = decodeURIComponent(liffState).replace(/^\?/, '');
+      const v = new URLSearchParams(decoded).get(key);
+      if (v) return v;
+    } catch(e) {}
+  }
+
+  // 3. リダイレクト前の元URLから取得
+  try {
+    const rawSearch = _rawHref.split('?')[1] || '';
+    const r = new URLSearchParams(rawSearch).get(key);
+    if (r) return r;
+    // liff.stateも元URLから
+    const rawState = new URLSearchParams(rawSearch).get('liff.state');
+    if (rawState) {
+      const decoded = decodeURIComponent(rawState).replace(/^\?/, '');
+      const v = new URLSearchParams(decoded).get(key);
+      if (v) return v;
+    }
+  } catch(e) {}
+
+  // 4. ハッシュから
+  const h = new URLSearchParams(window.location.hash.replace(/^#/, '')).get(key);
+  if (h) return h;
+
+  return null;
+}
+
+liff.init({ liffId: "2009771539-jWhW3ti2" }).then(() => {
+  if (!liff.isLoggedIn()) { liff.login(); } else { handleStartup(); }
+}).catch(err => showError("LIFF初期化失敗: " + err));
+
+async function handleStartup() {
+  const context = liff.getContext();
+  const profile = await liff.getProfile();
+  const action = getParam('action');
+  const baseParams = { line_user_id: context.userId, display_name: profile.displayName };
+
+  try {
+    if (action === 'add_points') {
+      const pts   = getParam('points')   || '1';
+      const evtId = getParam('event_id') || 'QRスキャン';
+      const addRes = await apiPost({
+        ...baseParams,
+        action: 'add_points',
+        points: pts,
+        event_id: evtId
+      });
+      if (addRes.success) {
+        alert(pts + 'ポイント獲得しました！（' + evtId + '）');
+      } else {
+        alert("エラー：" + addRes.error);
+      }
+    }
+
+    await loadData();
+    document.getElementById('loading').style.display = 'none';
+  } catch (err) {
+    showError("通信エラー: " + err);
+  }
+}
+
+async function loadData() {
+  const context = liff.getContext();
+  const res = await apiPost({ action: 'get_card', line_user_id: context.userId });
+  if (res.success) { currentCardData = res; updateUI(res); } else { showError(res.error); }
+}
+
+function updateUI(data) {
+  document.getElementById('points-val').innerText = data.current_points;
+  const container = document.getElementById('stamps-container');
+  container.innerHTML = '';
+  const totalSlots = Math.max(15, data.current_points);
+  
+  for (let i = 1; i <= totalSlots; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'stamp-slot' + (i <= data.current_points ? ' active' : '');
+    slot.innerHTML = '<img class="stamp-img" src="stamp.png">';
+    container.appendChild(slot);
+  }
+  renderRewardsList(data.current_points);
+}
+
+function renderRewardsList(currentPoints) {
+  const rewardList = document.getElementById('rewards-list');
+  rewardList.innerHTML = '';
+  const REWARD_CONF = { 5: 'グッズ 100円引き', 10: 'ガチャガチャ 1回無料', 15: '観劇 500円引き' };
+  
+  Object.keys(REWARD_CONF).forEach(pts => {
+    const pointsNum = parseInt(pts);
+    const canUse = currentPoints >= pointsNum;
+    const item = document.createElement('div');
+    item.className = 'reward-item';
+    item.innerHTML = `
+      <span class="reward-name">${REWARD_CONF[pts]} (${pts}pt)</span>
+      <button class="reward-btn ${canUse ? 'btn-use' : 'btn-lock'}" 
+              onclick="${canUse ? `useCoupon(${pointsNum}, '${REWARD_CONF[pts]}')` : ''}">
+        ${canUse ? '使用する' : '不足'}
+      </button>
+    `;
+    rewardList.appendChild(item);
+  });
+
+  const activeCard = document.getElementById('active-coupons-card');
+  const activeListContainer = document.getElementById('active-coupons-list');
+  
+  if (activeCoupons.length > 0) {
+    activeListContainer.innerHTML = activeCoupons.map((coupon, index) => `
+      <div class="active-coupon-item">
+        <span class="active-coupon-name">${coupon.label}</span>
+        <button class="btn-resume" onclick="resumeActiveQR(${index})">QR表示</button>
+      </div>
+    `).join('');
+    activeCard.style.display = 'block';
+  } else {
+    activeCard.style.display = 'none';
+  }
+}
+
+async function useCoupon(pts, label) {
+  const msg = `おめでとうございます！\n特典内容：${label}\n\n※確認のため予約者名のご入力お願いします`;
+  const name = prompt(msg);
+  if (!name) return;
+
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loading').innerText = '特典を交換中...';
+
+  try {
+    const res = await apiPost({
+      action: 'generate_coupon',
+      line_user_id: liff.getContext().userId,
+      display_name: (await liff.getProfile()).displayName,
+      reservation_name: name,
+      use_points: pts
+    });
+
+    if (res.success) {
+      activeCoupons.push({ url: res.qr_url, label: label, pts: pts });
+      if (currentCardData) { currentCardData.current_points -= pts; updateUI(currentCardData); }
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('loading').innerText = '読み込み中...';
+      showPage('qr');
+      document.getElementById('qr-title').innerText = label;
+      document.getElementById('qrcode').innerHTML = '';
+      new QRCode(document.getElementById("qrcode"), { text: res.qr_url, width: 200, height: 200 });
+    } else {
+      document.getElementById('loading').style.display = 'none';
+      alert(res.error);
+      showPage('rewards');
+    }
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    alert("QRコードの作成に失敗しました。");
+    showPage('rewards');
+  }
+}
+
+function resumeActiveQR(index) {
+  const coupon = activeCoupons[index];
+  if (!coupon) return;
+  showPage('qr');
+  document.getElementById('qr-title').innerText = coupon.label;
+  document.getElementById('qrcode').innerHTML = '';
+  new QRCode(document.getElementById("qrcode"), { text: coupon.url, width: 200, height: 200 });
+}
+
+function cancelQR() { 
+  showPage('rewards'); 
+  if (currentCardData) renderRewardsList(currentCardData.current_points);
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  showPage(name);
+  if (name === 'history') loadHistory();
+  if (name === 'rewards' && currentCardData) renderRewardsList(currentCardData.current_points);
+}
+
+// === 履歴表示処理 ===
+async function loadHistory() {
+  const historyList = document.getElementById('history-list');
+  historyList.innerHTML = '<p style="text-align:center; padding:20px; color:#999; font-size:13px;">読み込み中...</p>';
+  
+  try {
+    const res = await apiPost({ 
+      action: 'get_history', 
+      line_user_id: liff.getContext().userId 
+    });
+    
+    if (res.success) {
+      if (res.history.length === 0) {
+        historyList.innerHTML = '<p style="text-align:center; padding:20px; color:#999; font-size:13px;">履歴はありません</p>';
+        return;
+      }
+      
+      // 履歴一覧を組み立てて表示
+      historyList.innerHTML = res.history.map(h => `
+        <div class="history-item">
+          <div>
+            <div class="history-event">${h.event}</div>
+            <div class="history-date">${h.date}</div>
+          </div>
+          <div class="history-points ${h.change > 0 ? 'pts-plus' : 'pts-minus'}">
+            ${h.change > 0 ? '+' : ''}${h.change} pt
+          </div>
+        </div>
+      `).join('');
+    } else {
+      historyList.innerHTML = '<p style="color:red; text-align:center; padding:10px;">エラー: ' + res.error + '</p>';
+    }
+  } catch (err) {
+    historyList.innerHTML = '<p style="color:red; text-align:center; padding:10px;">通信に失敗しました</p>';
+  }
+}
+
+async function apiPost(data) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+function showError(msg) {
+  document.getElementById('loading').innerHTML = `<div style="color:red;padding:20px;text-align:center;">${msg}</div>`;
+}
+</script>
+</body>
+</html>

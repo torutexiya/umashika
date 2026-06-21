@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>うましかスタンプ - スタッフ専用パネル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        #qrcode img { margin: 0 auto; border: 8px solid white; border-radius: 8px; }
+        #camera-preview { width: 100%; max-width: 320px; border-radius: 12px; }
+        .scan-box { position: relative; display: inline-block; }
+        .scan-line { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #22c55e; animation: scan 2s linear infinite; }
+        @keyframes scan { 0%{top:0%} 100%{top:100%} }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen pb-10">
+
+    <header class="p-6 text-center border-b border-slate-800 bg-slate-900 sticky top-0 z-10">
+        <h1 class="text-xl font-bold tracking-widest text-yellow-500">うましかスタンプ</h1>
+        <p class="text-xs text-slate-400 mt-1">スタッフ専用パネル</p>
+    </header>
+
+    <main class="p-4 space-y-4">
+
+        <!-- セクション：ポイント付与 -->
+        <div class="text-sm text-slate-400 px-2 pt-2 pb-1 font-bold uppercase tracking-widest">📌 ポイント付与</div>
+
+        <button onclick="showQR('観劇', 2)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-masks-theater text-yellow-500 text-xl"></i>
+                </div>
+                <div class="text-left">
+                    <div class="font-bold text-lg text-slate-100">観劇</div>
+                    <div class="text-xs text-slate-400">受付にて提示</div>
+                </div>
+            </div>
+            <div class="bg-yellow-500 text-slate-900 font-bold px-3 py-1 rounded-full text-sm">+2 pt</div>
+        </button>
+
+        <button onclick="showQR('ワークショップ', 1)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-people-group text-sky-500 text-xl"></i>
+                </div>
+                <div class="text-left">
+                    <div class="font-bold text-lg text-slate-100">ワークショップ</div>
+                    <div class="text-xs text-slate-400">WS参加時</div>
+                </div>
+            </div>
+            <div class="bg-sky-500 text-white font-bold px-3 py-1 rounded-full text-sm">+1 pt</div>
+        </button>
+
+        <button onclick="showQR('グッズ購入', 1)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-bag-shopping text-emerald-500 text-xl"></i>
+                </div>
+                <div class="text-left">
+                    <div class="font-bold text-lg text-slate-100">グッズ購入</div>
+                    <div class="text-xs text-slate-400">物販コーナー</div>
+                </div>
+            </div>
+            <div class="bg-emerald-500 text-white font-bold px-3 py-1 rounded-full text-sm">+1 pt</div>
+        </button>
+
+        <!-- セクション：クーポン読み取り -->
+        <div class="text-sm text-slate-400 px-2 pt-4 pb-1 font-bold uppercase tracking-widest">🎫 クーポン読み取り</div>
+
+        <button onclick="startCouponScan()" class="w-full bg-slate-800 border border-purple-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-qrcode text-purple-400 text-xl"></i>
+                </div>
+                <div class="text-left">
+                    <div class="font-bold text-lg text-slate-100">クーポンを読み取る</div>
+                    <div class="text-xs text-slate-400">お客様の画面をスキャン</div>
+                </div>
+            </div>
+            <i class="fa-solid fa-camera text-purple-400 text-xl"></i>
+        </button>
+
+    </main>
+
+    <!-- ポイント付与QRモーダル -->
+    <div id="qr-modal" class="modal fixed inset-0 bg-slate-950/90 z-50 flex-col items-center justify-center p-6 backdrop-blur-sm">
+        <div class="w-full max-w-sm bg-white rounded-3xl p-8 text-slate-900 text-center shadow-2xl">
+            <div id="modal-title" class="text-2xl font-bold mb-1">観劇</div>
+            <div id="modal-pts" class="text-sm font-bold text-yellow-600 mb-6">+2 pt を付与</div>
+            <div id="qrcode" class="flex justify-center mb-4"></div>
+            <p class="text-xs text-slate-400 mb-8 leading-relaxed">
+                お客様のLINEカメラでスキャンしてください。<br>
+                1人1回のみ有効です。
+            </p>
+            <button onclick="hideQR()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 rounded-2xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <!-- クーポンスキャンモーダル -->
+    <div id="scan-modal" class="modal fixed inset-0 bg-slate-950/95 z-50 flex-col items-center justify-center p-6 backdrop-blur-sm">
+        <div class="w-full max-w-sm bg-slate-800 rounded-3xl p-6 text-center shadow-2xl">
+            <div class="text-lg font-bold text-white mb-4">🎫 クーポンQRを読み取り中</div>
+            <div class="scan-box mb-4">
+                <video id="camera-preview" autoplay playsinline muted></video>
+                <div class="scan-line"></div>
+            </div>
+            <canvas id="scan-canvas" style="display:none;"></canvas>
+            <p class="text-xs text-slate-400 mb-6">お客様の画面のQRコードにカメラを向けてください</p>
+            <button onclick="stopScan()" class="w-full bg-slate-700 text-slate-300 font-bold py-4 rounded-2xl">
+                キャンセル
+            </button>
+        </div>
+    </div>
+
+    <!-- クーポン確認モーダル -->
+    <div id="confirm-modal" class="modal fixed inset-0 bg-slate-950/95 z-50 flex-col items-center justify-center p-6 backdrop-blur-sm">
+        <div class="w-full max-w-sm bg-white rounded-3xl p-8 text-slate-900 text-center shadow-2xl">
+            <div class="text-3xl mb-4">🎉</div>
+            <div class="text-xl font-bold mb-2">クーポン確認</div>
+            <div id="confirm-reward" class="text-lg font-bold text-blue-600 mb-1"></div>
+            <div id="confirm-name" class="text-sm text-slate-500 mb-1"></div>
+            <div id="confirm-pts" class="text-sm text-red-500 font-bold mb-6"></div>
+            <button onclick="approveCoupon()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl mb-3 text-lg">
+                ✅ 承認して特典を渡す
+            </button>
+            <button onclick="cancelConfirm()" class="w-full bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl">
+                キャンセル
+            </button>
+        </div>
+    </div>
+
+    <!-- 結果モーダル -->
+    <div id="result-modal" class="modal fixed inset-0 bg-slate-950/95 z-50 flex-col items-center justify-center p-6 backdrop-blur-sm">
+        <div class="w-full max-w-sm bg-white rounded-3xl p-8 text-slate-900 text-center shadow-2xl">
+            <div id="result-icon" class="text-5xl mb-4">✅</div>
+            <div id="result-title" class="text-xl font-bold mb-2"></div>
+            <div id="result-body" class="text-sm text-slate-500 mb-8"></div>
+            <button onclick="closeResult()" class="w-full bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwWVDOD5Ip9lzPcD15MpKQuG1-8ijIRXKEfIdZAbuw59bqB8XxJJpRC6OtA4iKtVGDh/exec';
+
+        let scanInterval = null;
+        let videoStream = null;
+        let currentToken = null;
+        let currentCouponData = null;
+
+        // ===== ポイント付与QR =====
+        function showQR(name, pts) {
+            document.getElementById('modal-title').innerText = name;
+            document.getElementById('modal-pts').innerText = "+" + pts + " pt を付与";
+            const targetUrl = GAS_URL + '?action=add_points&points=' + pts + '&event_id=' + encodeURIComponent(name);
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), {
+                text: targetUrl, width: 240, height: 240,
+                colorDark: "#0f172a", colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            document.getElementById('qr-modal').classList.add('active');
+            if (window.navigator.vibrate) window.navigator.vibrate(50);
+        }
+
+        function hideQR() {
+            document.getElementById('qr-modal').classList.remove('active');
+        }
+
+        // ===== クーポンスキャン =====
+        async function startCouponScan() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                const video = document.getElementById('camera-preview');
+                video.srcObject = videoStream;
+                document.getElementById('scan-modal').classList.add('active');
+
+                video.addEventListener('loadedmetadata', () => {
+                    scanInterval = setInterval(() => scanFrame(video), 300);
+                });
+            } catch(e) {
+                alert('カメラの起動に失敗しました。カメラの許可をONにしてください。');
+            }
+        }
+
+        function scanFrame(video) {
+            const canvas = document.getElementById('scan-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code && code.data) {
+                stopScan();
+                handleScannedToken(code.data.trim());
+            }
+        }
+
+        function stopScan() {
+            if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+            if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+            document.getElementById('scan-modal').classList.remove('active');
+        }
+
+        async function handleScannedToken(token) {
+            // GASにトークンを送って検証
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: 'verify_coupon', token: token })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentToken = token;
+                    currentCouponData = data;
+                    document.getElementById('confirm-reward').innerText = '【' + data.reward_label + '】';
+                    document.getElementById('confirm-name').innerText = '予約名：' + data.reservation_name;
+                    document.getElementById('confirm-pts').innerText = '-' + data.use_points + ' pt 消費';
+                    document.getElementById('confirm-modal').classList.add('active');
+                } else {
+                    showResult('❌', 'エラー', data.error || '無効なクーポンです');
+                }
+            } catch(e) {
+                showResult('❌', '通信エラー', 'もう一度お試しください');
+            }
+        }
+
+        async function approveCoupon() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: 'approve_coupon', token: currentToken })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showResult('✅', '特典を承認しました', currentCouponData.reward_label + 'を付与してください');
+                } else {
+                    showResult('❌', 'エラー', data.error || '処理に失敗しました');
+                }
+            } catch(e) {
+                showResult('❌', '通信エラー', 'もう一度お試しください');
+            }
+        }
+
+        function cancelConfirm() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            currentToken = null;
+            currentCouponData = null;
+        }
+
+        function showResult(icon, title, body) {
+            document.getElementById('result-icon').innerText = icon;
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('result-body').innerText = body;
+            document.getElementById('result-modal').classList.add('active');
+        }
+
+        function closeResult() {
+            document.getElementById('result-modal').classList.remove('active');
+            currentToken = null;
+            currentCouponData = null;
+        }
+
+        window.onpopstate = function() {
+            hideQR();
+            stopScan();
+        };
+    </script>
+</body>
+</html>
