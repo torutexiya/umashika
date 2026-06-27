@@ -27,18 +27,12 @@
     </header>
 
     <!-- タブ -->
-    <div style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; border-top:1px solid #e2e8f0; z-index:50;">
-        <div class="tab active" id="tab-point" onclick="switchTab('point')">ポイント発行</div>
-        <div class="tab" id="tab-coupon" onclick="switchTab('coupon')">特典承認</div>
-        <div class="tab" id="tab-history" onclick="switchTab('history')">利用履歴</div>
-    </div>
-
     <!-- ページ：ポイント発行 -->
     <div id="page-point" class="page active">
         <main class="p-4 space-y-4">
             <div class="text-sm text-slate-400 px-2 pb-2">発行する項目を選択してください：</div>
 
-            <button onclick="showQR(this.dataset.name, 2)" data-name="観劇" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <button onclick="showQR('観劇', 2)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
                         <i class="fa-solid fa-masks-theater text-yellow-500 text-xl"></i>
@@ -51,7 +45,7 @@
                 <div class="bg-yellow-500 text-slate-900 font-bold px-3 py-1 rounded-full text-sm">+2 pt</div>
             </button>
 
-            <button onclick="showQR(this.dataset.name, 1)" data-name="ワークショップ" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <button onclick="showQR('ワークショップ', 1)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center">
                         <i class="fa-solid fa-people-group text-sky-500 text-xl"></i>
@@ -64,7 +58,7 @@
                 <div class="bg-sky-500 text-white font-bold px-3 py-1 rounded-full text-sm">+1 pt</div>
             </button>
 
-            <button onclick="showQR(this.dataset.name, 1)" data-name="グッズ購入" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <button onclick="showQR('グッズ購入', 1)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center">
                         <i class="fa-solid fa-bag-shopping text-emerald-500 text-xl"></i>
@@ -156,6 +150,13 @@
         </div>
     </div>
 
+    <!-- タブナビゲーション -->
+    <div style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; border-top:1px solid #e2e8f0; z-index:50;">
+        <div class="tab active" id="tab-point" onclick="switchTab('point')">ポイント発行</div>
+        <div class="tab" id="tab-coupon" onclick="switchTab('coupon')">特典承認</div>
+        <div class="tab" id="tab-history" onclick="switchTab('history')">利用履歴</div>
+    </div>
+
     <script>
         // ===== 設定 =====
         const LIFF_ID_CUSTOMER = '2010459570-8NHozdMT'; // お客様用LIFF
@@ -194,7 +195,7 @@
                 height: 240,
                 colorDark: "#0f172a",
                 colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
+                correctLevel: QRCode.CorrectLevel.L
             });
 
             document.getElementById('qr-modal').classList.add('active');
