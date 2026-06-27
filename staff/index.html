@@ -27,12 +27,6 @@
     </header>
 
     <!-- タブ -->
-    <div style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; border-top:1px solid #e2e8f0; z-index:50;">
-        <div class="tab active" id="tab-point" onclick="switchTab('point')">ポイント発行</div>
-        <div class="tab" id="tab-coupon" onclick="switchTab('coupon')">特典承認</div>
-        <div class="tab" id="tab-history" onclick="switchTab('history')">利用履歴</div>
-    </div>
-
     <!-- ページ：ポイント発行 -->
     <div id="page-point" class="page active">
         <main class="p-4 space-y-4">
@@ -156,11 +150,18 @@
         </div>
     </div>
 
+    <!-- タブナビゲーション -->
+    <div style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; border-top:1px solid #e2e8f0; z-index:50;">
+        <div class="tab active" id="tab-point" onclick="switchTab('point')">ポイント発行</div>
+        <div class="tab" id="tab-coupon" onclick="switchTab('coupon')">特典承認</div>
+        <div class="tab" id="tab-history" onclick="switchTab('history')">利用履歴</div>
+    </div>
+
     <script>
         // ===== 設定 =====
         const LIFF_ID_CUSTOMER = '2010459570-8NHozdMT'; // お客様用LIFF
         const LIFF_ID_STAFF    = '2010459570-R8A7lcll';  // スタッフ用LIFF
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwWVDOD5Ip9lzPcD15MpKQuG1-8ijIRXKEfIdZAbuw59bqB8XxJJpRC6OtA4iKtVGDh/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxoKyVIAZfpHYh4JLh9iOfH3zHZ347IWmmDom_uZ6oD78zWJr0rqacXX2dDsKUENwo4/exec';
 
         let currentToken = null;
 
@@ -194,7 +195,7 @@
                 height: 240,
                 colorDark: "#0f172a",
                 colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
+                correctLevel: QRCode.CorrectLevel.L
             });
 
             document.getElementById('qr-modal').classList.add('active');
@@ -208,6 +209,13 @@
         // ===== 特典承認スキャン =====
         async function startCouponScanner() {
             showCouponMsg('', '');
+
+            // LIFFから開いていない場合はLIFFのURLにリダイレクト
+            if (!liff.isInClient()) {
+                window.location.href = 'https://liff.line.me/' + LIFF_ID_STAFF;
+                return;
+            }
+
             if (!liff.isLoggedIn()) { liff.login(); return; }
 
             if (liff.scanCodeV2) {
