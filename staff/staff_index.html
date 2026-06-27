@@ -38,7 +38,7 @@
         <main class="p-4 space-y-4">
             <div class="text-sm text-slate-400 px-2 pb-2">発行する項目を選択してください：</div>
 
-            <button onclick="showQR(&quot;観劇&quot;, 2)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <button onclick="showQR(this.dataset.name, 2)" data-name="観劇" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
                         <i class="fa-solid fa-masks-theater text-yellow-500 text-xl"></i>
@@ -51,7 +51,7 @@
                 <div class="bg-yellow-500 text-slate-900 font-bold px-3 py-1 rounded-full text-sm">+2 pt</div>
             </button>
 
-            <button onclick="showQR(&quot;ワークショップ&quot;, 1)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <button onclick="showQR(this.dataset.name, 1)" data-name="ワークショップ" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center">
                         <i class="fa-solid fa-people-group text-sky-500 text-xl"></i>
@@ -64,7 +64,7 @@
                 <div class="bg-sky-500 text-white font-bold px-3 py-1 rounded-full text-sm">+1 pt</div>
             </button>
 
-            <button onclick="showQR(&quot;グッズ購入&quot;, 1)" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
+            <button onclick="showQR(this.dataset.name, 1)" data-name="グッズ購入" class="w-full bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center justify-between active:scale-95 transition-transform">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center">
                         <i class="fa-solid fa-bag-shopping text-emerald-500 text-xl"></i>
@@ -160,7 +160,7 @@
         // ===== 設定 =====
         const LIFF_ID_CUSTOMER = '2010459570-8NHozdMT'; // お客様用LIFF
         const LIFF_ID_STAFF    = '2010459570-R8A7lcll';  // スタッフ用LIFF
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwWVDOD5Ip9lzPcD15MpKQuG1-8ijIRXKEfIdZAbuw59bqB8XxJJpRC6OtA4iKtVGDh/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxoKyVIAZfpHYh4JLh9iOfH3zHZ347IWmmDom_uZ6oD78zWJr0rqacXX2dDsKUENwo4/exec';
 
         let currentToken = null;
 
