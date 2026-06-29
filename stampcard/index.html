@@ -158,7 +158,7 @@ function getParam(key) {
 }
 
 // ===== LIFF初期化 =====
-liff.init({ liffId: "2010459570-8NHozdMT" }).then(() => {
+liff.init({ liffId: "2009771539-jWhW3ti2" }).then(() => {
   if (!liff.isLoggedIn()) { liff.login(); } else { handleStartup(); }
 }).catch(err => showError("LIFF初期化失敗: " + err));
 
@@ -206,7 +206,7 @@ function updateUI(data) {
   for (let i = 1; i <= totalSlots; i++) {
     const slot = document.createElement('div');
     slot.className = 'stamp-slot' + (i <= data.current_points ? ' active' : '');
-    slot.innerHTML = '<img class="stamp-img" src="stamp.png">';
+    slot.innerHTML = '<img class="stamp-img" src="/stampcard/stamp.png">';
     container.appendChild(slot);
   }
   renderRewardsList(data.current_points);
