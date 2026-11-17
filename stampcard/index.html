@@ -22,7 +22,7 @@
   .stamp-slot.active { background: #e0f2fe; border: 2px solid #005bac; }
   .stamp-img { width: 90%; height: 90%; object-fit: contain; display: none; }
   .stamp-slot.active .stamp-img { display: block; }
-  .tabs { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #e2e8f0; }
+  .tabs { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #e2e8f0; z-index: 90; }
   .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; color: #94a3b8; cursor: pointer; }
   .tab.active { color: #005bac; font-weight: bold; border-top: 2px solid #005bac; }
   .page { display: none; }
@@ -39,12 +39,188 @@
   .reward-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
   .btn-use { background: #005bac; color: #fff; }
   .btn-lock { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+  .btn-wchance { background: linear-gradient(135deg, #ff2f92, #b0005f); color: #fff; }
   .active-coupon-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
   .active-coupon-item:last-child { border-bottom: none; }
   .active-coupon-name { font-size: 13px; color: #1e3a8a; font-weight: bold; }
   .btn-resume { padding: 5px 12px; background: #005bac; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
   .reward-notice { background: #fffdf5; border: 1px solid #fef08a; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 12px; color: #854d0e; line-height: 1.6; }
   .notice-important { font-weight: bold; color: #9a3412; display: inline-block; margin-top: 4px; }
+
+  /* ===== もぎりチケット用モーダル・デザイン ===== */
+  #ticket-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(35, 6, 56, 0.9);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-y: auto;
+  }
+  .ticket-wrapper {
+    width: 100%;
+    max-width: 360px;
+    position: relative;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6));
+    font-family: "Zen Maru Gothic", sans-serif;
+  }
+  .ticket-main {
+    background: #fffaf0;
+    color: #1b2140;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 18px 18px;
+    position: relative;
+    border: 3px solid #1b2140;
+    border-bottom: none;
+  }
+  .ticket-main::before, .ticket-main::after {
+    content: "";
+    position: absolute;
+    bottom: -14px;
+    width: 24px;
+    height: 24px;
+    background: #230638;
+    border-radius: 50%;
+    border: 3px solid #1b2140;
+    z-index: 5;
+  }
+  .ticket-main::before { left: -15px; }
+  .ticket-main::after { right: -15px; }
+  .ticket-shop { font-size: 12px; font-weight: 900; color: #ff2f92; margin-bottom: 2px; }
+  .ticket-title { font-size: 22px; font-weight: 900; color: #1b2140; margin: 4px 0 10px; }
+  .ticket-amount {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffe46b, #f5a300);
+    border: 3px solid #1b2140;
+    border-radius: 10px;
+    padding: 6px 14px;
+    font-size: 24px;
+    font-weight: 900;
+    color: #1b2140;
+    box-shadow: 2px 2px 0 #1b2140;
+    margin-bottom: 12px;
+  }
+  .ticket-desc {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.4;
+    background: #f3ece0;
+    padding: 8px;
+    border-radius: 8px;
+    text-align: left;
+  }
+  .perforation {
+    height: 4px;
+    background: #fffaf0;
+    border-left: 3px solid #1b2140;
+    border-right: 3px solid #1b2140;
+    position: relative;
+  }
+  .perforation::after {
+    content: "";
+    position: absolute;
+    left: 14px; right: 14px; top: 0;
+    border-top: 3px dashed #b8a992;
+  }
+  .ticket-stub {
+    background: #ffe8f3;
+    color: #1b2140;
+    border-radius: 0 0 20px 20px;
+    padding: 16px 14px;
+    border: 3px solid #1b2140;
+    border-top: none;
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+    transform-origin: top left;
+  }
+  .ticket-stub.torn {
+    transform: translateX(120%) rotate(18deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .staff-warn {
+    font-size: 10px;
+    font-weight: 900;
+    color: #d8132f;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .swipe-track {
+    position: relative;
+    height: 48px;
+    background: #fff;
+    border: 3px solid #1b2140;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .swipe-text {
+    font-size: 12px;
+    font-weight: 900;
+    color: #888;
+    pointer-events: none;
+  }
+  .swipe-knob {
+    position: absolute;
+    left: 4px; top: 4px;
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, #ff2f92, #b0005f);
+    border: 2px solid #1b2140;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .used-stamp {
+    position: absolute;
+    top: 45%; left: 50%;
+    transform: translate(-50%, -50%) scale(2) rotate(-14deg);
+    border: 4px solid #d8132f;
+    color: #d8132f;
+    font-size: 28px;
+    font-weight: 900;
+    padding: 4px 14px;
+    border-radius: 10px;
+    background: rgba(255, 250, 240, 0.92);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+    z-index: 10;
+  }
+  .used-stamp.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-14deg);
+  }
+  .used-date {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    margin-top: 2px;
+    text-align: center;
+  }
+  .modal-close-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    background: #f1f5f9;
+    border: 2px solid #1b2140;
+    border-radius: 12px;
+    color: #1b2140;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -76,7 +252,18 @@
     </div>
     <div class="card">
       <h3 style="margin-bottom: 15px; font-size: 16px; color: #334155;">利用可能な特典</h3>
+      
+      <!-- スタッフ用QRコードを読み取った人だけに表示されるWチャンス賞品枠 -->
+      <div id="wchance-reward-box" class="reward-item" style="display: none; background: #fff5f8; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 2px solid #ff2f92;">
+        <div>
+          <div style="font-size: 11px; font-weight: bold; color: #ff2f92;">Wチャンス当選者限定</div>
+          <div class="reward-name" style="font-weight: bold; color: #1b2140;">Wチャンス賞品：500円クーポン</div>
+        </div>
+        <button id="wchance-open-btn" class="reward-btn btn-wchance" onclick="openWChanceTicket()">チケットを開く</button>
+      </div>
+
       <div id="rewards-list"></div>
+      
       <div class="reward-notice">
         ※特典を交換する際に公演を予約したお名前をご入力お願いします。<br>
         また特典の使用は一回限りとさせていただきます。<br><br>
@@ -108,6 +295,37 @@
   </div>
 </div>
 
+<!-- ===== もぎり演出チケットモーダル ===== -->
+<div id="ticket-modal">
+  <div class="ticket-wrapper">
+    <div class="ticket-main">
+      <div class="ticket-shop">🐴 うましか 🦌</div>
+      <div class="ticket-title">Wチャンス賞品</div>
+      <div class="ticket-amount">500円クーポン</div>
+      <div class="ticket-desc">
+        ・お会計時にスタッフへご提示ください。<br>
+        ・スタッフが右へスライドしてもぎると使用済みになります。
+      </div>
+      <div class="used-stamp" id="modal-used-stamp">
+        使用済み
+        <span class="used-date" id="modal-used-date"></span>
+      </div>
+    </div>
+    
+    <div class="perforation" id="modal-perforation"></div>
+    
+    <div class="ticket-stub" id="modal-ticket-stub">
+      <div class="staff-warn">⚠️ スタッフ確認用（横にスワイプ）</div>
+      <div class="swipe-track" id="modal-swipe-track">
+        <span class="swipe-text">右へスライドしてもぎる ➔</span>
+        <div class="swipe-knob" id="modal-swipe-knob">✂️</div>
+      </div>
+    </div>
+
+    <button class="modal-close-btn" onclick="closeWChanceTicket()">閉じる</button>
+  </div>
+</div>
+
 <div class="tabs">
   <div class="tab active" id="tab-card" onclick="switchTab('card')">カード</div>
   <div class="tab" id="tab-rewards" onclick="switchTab('rewards')">特典</div>
@@ -121,16 +339,15 @@ let activeCoupons = [];
 let currentCardData = null;
 let checkStatusInterval = null;
 
-// ===== URLパラメータ取得（liff.state対応）=====
-// liff.init()前にhrefを保持しておく
+// ストレージキー定義
+const WCHANCE_GRANTED_KEY = 'umashika_wchance_granted';
+const WCHANCE_USED_KEY = 'umashika_wchance_ticket_used';
+
 const _rawHref = window.location.href;
 
 function getParam(key) {
-  // 1. 通常のクエリパラメータから取得
   const s = new URLSearchParams(window.location.search).get(key);
   if (s) return s;
-
-  // 2. liff.stateをデコードして取得
   const liffState = new URLSearchParams(window.location.search).get('liff.state');
   if (liffState) {
     try {
@@ -139,8 +356,6 @@ function getParam(key) {
       if (v) return v;
     } catch(e) {}
   }
-
-  // 3. リダイレクト前の元URLから取得
   try {
     const rawSearch = _rawHref.split('?')[1] || '';
     const r = new URLSearchParams(rawSearch).get(key);
@@ -152,15 +367,11 @@ function getParam(key) {
       if (v) return v;
     }
   } catch(e) {}
-
-  // 4. ハッシュから取得
   const h = new URLSearchParams(window.location.hash.replace(/^#/, '')).get(key);
   if (h) return h;
-
   return null;
 }
 
-// ===== LIFF初期化 =====
 liff.init({ liffId: "2010459570-8NHozdMT" }).then(() => {
   if (!liff.isLoggedIn()) { liff.login(); } else { handleStartup(); }
 }).catch(err => showError("LIFF初期化失敗: " + err));
@@ -172,6 +383,7 @@ async function handleStartup() {
   const baseParams = { line_user_id: context.userId, display_name: profile.displayName };
 
   try {
+    // 1. 通常のポイント付与QR読み込み
     if (action === 'add_points') {
       const pts   = getParam('points')   || '1';
       const evtId = getParam('event_id') || 'QRスキャン';
@@ -188,10 +400,49 @@ async function handleStartup() {
       }
     }
 
+    // 2. スタッフ提示の「Wチャンス500円クーポン付与QR」読み込み（?action=grant_wchance）
+    let grantedNow = false;
+    if (action === 'grant_wchance') {
+      if (!localStorage.getItem(WCHANCE_GRANTED_KEY)) {
+        localStorage.setItem(WCHANCE_GRANTED_KEY, 'true');
+        grantedNow = true;
+        alert('🎉 Wチャンス賞品「500円クーポン」を獲得しました！\n特典タブから確認できます。');
+      } else {
+        alert('すでにWチャンス賞品「500円クーポン」を受け取り済みです！');
+      }
+    }
+
     await loadData();
+    updateWChanceRewardVisibility();
     document.getElementById('loading').style.display = 'none';
+
+    // 付与された直後は自動的に「特典」タブを開いて見せる
+    if (grantedNow || action === 'grant_wchance') {
+      switchTab('rewards');
+    }
   } catch (err) {
     showError("通信エラー: " + err);
+  }
+}
+
+// Wチャンス特典枠の表示・状態更新
+function updateWChanceRewardVisibility() {
+  const box = document.getElementById('wchance-reward-box');
+  const btn = document.getElementById('wchance-open-btn');
+  const isGranted = localStorage.getItem(WCHANCE_GRANTED_KEY);
+  const isUsed = localStorage.getItem(WCHANCE_USED_KEY);
+
+  if (isGranted) {
+    box.style.display = 'flex';
+    if (isUsed) {
+      btn.textContent = '使用済み';
+      btn.style.background = '#94a3b8';
+    } else {
+      btn.textContent = 'チケットを開く';
+      btn.style.background = 'linear-gradient(135deg, #ff2f92, #b0005f)';
+    }
+  } else {
+    box.style.display = 'none';
   }
 }
 
@@ -216,6 +467,8 @@ function updateUI(data) {
 }
 
 function renderRewardsList(currentPoints) {
+  updateWChanceRewardVisibility();
+
   const rewardList = document.getElementById('rewards-list');
   rewardList.innerHTML = '';
   const REWARD_CONF = { 5: 'グッズ 100円引き', 10: 'ガチャガチャ 1回無料', 15: '観劇 500円引き' };
@@ -275,7 +528,6 @@ async function useCoupon(pts, label) {
       document.getElementById('qr-title').innerText = label;
       document.getElementById('qrcode').innerHTML = '';
       new QRCode(document.getElementById("qrcode"), { text: res.qr_url, width: 200, height: 200 });
-      // スタッフ承認を監視開始
       startCheckingStatus(res.qr_url);
     } else {
       document.getElementById('loading').style.display = 'none';
@@ -299,7 +551,6 @@ function resumeActiveQR(index) {
   startCheckingStatus(coupon.url);
 }
 
-// ===== スタッフ承認を3秒ごとに監視 =====
 function startCheckingStatus(token) {
   if (checkStatusInterval) clearInterval(checkStatusInterval);
   checkStatusInterval = setInterval(async () => {
@@ -308,10 +559,8 @@ function startCheckingStatus(token) {
       if (res.success && res.status === 'used') {
         clearInterval(checkStatusInterval);
         checkStatusInterval = null;
-        // GASから最新データを取得してポイント・履歴を更新
         await loadData();
         activeCoupons = [];
-        // QR画面を「使用済み」表示に切り替え
         document.getElementById('qrcode').innerHTML = `
           <div style="text-align:center; padding:30px 10px; background:#f0fdf4; border:2px solid #22c55e; border-radius:12px; margin-top:15px;">
             <div style="font-size:40px;">✅</div>
@@ -319,7 +568,6 @@ function startCheckingStatus(token) {
             <div style="font-size:13px; color:#666;">ポイントが更新されました</div>
           </div>
         `;
-        // 2.5秒後に履歴タブへ自動移動
         setTimeout(() => {
           cancelQR();
           switchTab('history');
@@ -349,7 +597,6 @@ function switchTab(name) {
   if (name === 'rewards' && currentCardData) renderRewardsList(currentCardData.current_points);
 }
 
-// ===== 履歴表示 =====
 async function loadHistory() {
   const historyList = document.getElementById('history-list');
   historyList.innerHTML = '<p style="text-align:center; padding:20px; color:#999; font-size:13px;">読み込み中...</p>';
@@ -394,6 +641,99 @@ async function apiPost(data) {
 function showError(msg) {
   document.getElementById('loading').innerHTML = `<div style="color:red;padding:20px;text-align:center;">${msg}</div>`;
 }
+
+// ===== Wチャンスチケット＆もぎり演出ロジック =====
+function openWChanceTicket() {
+  const modal = document.getElementById('ticket-modal');
+  modal.style.display = 'flex';
+  checkWChanceUsedState();
+}
+
+function closeWChanceTicket() {
+  document.getElementById('ticket-modal').style.display = 'none';
+  updateWChanceRewardVisibility();
+}
+
+function checkWChanceUsedState() {
+  const stub = document.getElementById('modal-ticket-stub');
+  const perf = document.getElementById('modal-perforation');
+  const stamp = document.getElementById('modal-used-stamp');
+  const dateEl = document.getElementById('modal-used-date');
+
+  const savedDate = localStorage.getItem(WCHANCE_USED_KEY);
+  if (savedDate) {
+    stub.style.display = 'none';
+    perf.style.display = 'none';
+    dateEl.textContent = savedDate;
+    stamp.classList.add('show');
+  } else {
+    stub.style.display = 'block';
+    stub.classList.remove('torn');
+    stub.style.transform = 'none';
+    stub.style.opacity = '1';
+    perf.style.display = 'block';
+    perf.style.opacity = '1';
+    stamp.classList.remove('show');
+  }
+}
+
+// スワイプもぎり処理
+const knob = document.getElementById('modal-swipe-knob');
+const track = document.getElementById('modal-swipe-track');
+const stub = document.getElementById('modal-ticket-stub');
+const stamp = document.getElementById('modal-used-stamp');
+const dateEl = document.getElementById('modal-used-date');
+const perf = document.getElementById('modal-perforation');
+
+let isDragging = false;
+let startX = 0;
+let currentX = 0;
+
+knob.addEventListener('pointerdown', (e) => {
+  if (localStorage.getItem(WCHANCE_USED_KEY)) return;
+  isDragging = true;
+  startX = e.clientX;
+  knob.style.transition = 'none';
+  stub.style.transition = 'none';
+  knob.setPointerCapture(e.pointerId);
+});
+
+knob.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const maxSlide = track.clientWidth - knob.clientWidth - 8;
+  currentX = Math.max(0, Math.min(e.clientX - startX, maxSlide));
+  
+  knob.style.transform = `translateX(${currentX}px)`;
+  const ratio = currentX / maxSlide;
+  stub.style.transform = `translateX(${currentX * 0.25}px) rotate(${ratio * 4}deg)`;
+});
+
+knob.addEventListener('pointerup', (e) => {
+  if (!isDragging) return;
+  isDragging = false;
+  const maxSlide = track.clientWidth - knob.clientWidth - 8;
+  
+  knob.style.transition = 'transform 0.3s ease';
+  stub.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease';
+
+  if (currentX >= maxSlide * 0.8) {
+    const now = new Date();
+    const formatted = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    
+    localStorage.setItem(WCHANCE_USED_KEY, formatted);
+    
+    stub.classList.add('torn');
+    perf.style.opacity = '0';
+    dateEl.textContent = formatted;
+    setTimeout(() => {
+      stamp.classList.add('show');
+      updateWChanceRewardVisibility();
+    }, 200);
+  } else {
+    knob.style.transform = 'translateX(0px)';
+    stub.style.transform = 'translateX(0px) rotate(0deg)';
+  }
+});
 </script>
 </body>
 </html>
