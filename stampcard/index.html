@@ -402,6 +402,11 @@ async function handleStartup() {
 
     // 2. スタッフ提示の「Wチャンス500円クーポン付与QR」読み込み（?action=grant_wchance）
     let grantedNow = false;
+    if (action === 'reset_wchance') {
+      localStorage.removeItem(WCHANCE_GRANTED_KEY);
+      localStorage.removeItem(WCHANCE_USED_KEY);
+      alert('🔄 Wチャンスのテスト履歴をリセットしました！');
+    }
     if (action === 'grant_wchance') {
       if (!localStorage.getItem(WCHANCE_GRANTED_KEY)) {
         localStorage.setItem(WCHANCE_GRANTED_KEY, 'true');
