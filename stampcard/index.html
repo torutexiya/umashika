@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>うましかスタンプ</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #f4f7f9; min-height: 100vh; padding-bottom: 70px; }
@@ -35,15 +34,13 @@
   .pts-plus { color: #005bac; }
   .pts-minus { color: #e53e3e; }
   .reward-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+  .reward-item:last-child { border-bottom: none; }
   .reward-name { font-size: 14px; color: #334155; }
-  .reward-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
+  .reward-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; }
   .btn-use { background: #005bac; color: #fff; }
   .btn-lock { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
-  .btn-coupon { background: linear-gradient(135deg, #ff2f92, #b0005f); color: #fff; }
-  .active-coupon-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-  .active-coupon-item:last-child { border-bottom: none; }
-  .active-coupon-name { font-size: 13px; color: #1e3a8a; font-weight: bold; }
-  .btn-resume { padding: 5px 12px; background: #005bac; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+  .btn-ticket { background: linear-gradient(135deg, #ff2f92, #b0005f); color: #fff; }
+  .btn-ticket-blue { background: linear-gradient(135deg, #0072ce, #004488); color: #fff; }
   .reward-notice { background: #fffdf5; border: 1px solid #fef08a; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 12px; color: #854d0e; line-height: 1.6; }
   .notice-important { font-weight: bold; color: #9a3412; display: inline-block; margin-top: 4px; }
 
@@ -98,18 +95,28 @@
   }
   .ticket-shop { font-size: 11px; font-weight: 900; color: #ff2f92; }
   .ticket-no { font-size: 10px; font-family: monospace; font-weight: bold; color: #718096; background: #edf2f7; padding: 2px 6px; border-radius: 4px; }
-  .ticket-title { font-size: 18px; font-weight: 900; color: #1b2140; margin: 2px 0 8px; }
+  .ticket-title { font-size: 17px; font-weight: 900; color: #1b2140; margin: 2px 0 8px; }
   .ticket-amount {
     display: inline-block;
     background: linear-gradient(135deg, #ffe46b, #f5a300);
     border: 3px solid #1b2140;
     border-radius: 10px;
     padding: 6px 14px;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 900;
     color: #1b2140;
     box-shadow: 2px 2px 0 #1b2140;
     margin-bottom: 10px;
+  }
+  .ticket-holder {
+    font-size: 12px;
+    font-weight: bold;
+    color: #005bac;
+    background: #e0f2fe;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: none;
   }
   .ticket-desc {
     font-size: 11px;
@@ -255,29 +262,27 @@
         <div><span class="points-count" id="points-val">0</span><span class="points-unit">pt</span></div>
       </div>
       <div class="stamps-grid" id="stamps-container"></div>
-      <p style="font-size: 11px; color: #94a3b8; margin-top: 15px; text-align: center;">※5ポイントでクーポンが利用可能になります</p>
+      <p style="font-size: 11px; color: #94a3b8; margin-top: 15px; text-align: center;">※5ポイントで特典チケットと交換可能になります</p>
     </div>
   </div>
 
   <div id="page-rewards" class="page">
-    <div class="card" id="active-coupons-card" style="display: none; border: 2px solid #005bac; background: #f0f7ff;">
-      <h3 style="margin-bottom: 10px; font-size: 14px; color: #005bac;">🎫 スタッフに提示待ちのクーポン</h3>
-      <div id="active-coupons-list"></div>
+    <!-- 所持中のチケット一覧枠（付与された500円クーポン ＆ ポイントで交換した特典チケット） -->
+    <div class="card" id="owned-tickets-card" style="display: none; border: 2px solid #ff2f92; background: #fff9fc;">
+      <h3 style="margin-bottom: 10px; font-size: 15px; color: #b0005f;">🎫 所持中のチケット（未使用・使用後2時間以内）</h3>
+      <div id="owned-tickets-list"></div>
     </div>
-    <div class="card">
-      <h3 style="margin-bottom: 15px; font-size: 16px; color: #334155;">利用可能な特典</h3>
-      
-      <!-- 複数クーポン対応コンテナ（持っている枚数分だけ動的に2個目・3個目の枠が並ぶ） -->
-      <div id="granted-coupons-container"></div>
 
+    <div class="card">
+      <h3 style="margin-bottom: 15px; font-size: 16px; color: #334155;">ポイントで交換できる特典</h3>
       <div id="rewards-list"></div>
       
       <div class="reward-notice">
-        ※特典を交換する際に公演を予約したお名前をご入力お願いします。<br>
-        また特典の使用は一回限りとさせていただきます。<br><br>
+        ※ポイント特典を交換する際に公演を予約したお名前をご入力お願いします。<br>
+        またチケットの使用は一回限りとさせていただきます。<br><br>
         <span class="notice-important">
-          サイトを一度抜けると交換した特典が消える恐れがありますのでご使用の際に交換・ご使用をよろしくお願いいたします。<br>
-          また特典未使用のままサイトを抜けた場合でもポイントは保持されます。
+          交換したチケットは未使用のままなら消えずに保持されます。<br>
+          スタッフにもぎり操作をしてもらった後、2時間経過で一覧から自動的に消去されます。
         </span><br><br>
         ＜ポイント付与について＞<br>
         ・観劇・ワークショップ：同じQRコードは3時間以内に再スキャンしてもポイントは付与されません。<br>
@@ -292,29 +297,21 @@
       <div id="history-list"></div>
     </div>
   </div>
-
-  <div id="page-qr" class="page">
-    <div class="card">
-      <h3 id="qr-title">クーポンを使用する</h3>
-      <p style="font-size: 13px; color: #666; margin-top: 5px;">スタッフにこの画面を提示してください</p>
-      <div id="qrcode"></div>
-      <button onclick="cancelQR()" style="margin-top:20px; width:100%; padding:12px; background:#f1f5f9; border:none; border-radius:10px; color:#64748b;">戻る</button>
-    </div>
-  </div>
 </div>
 
-<!-- ===== 本格的もぎりチケットモーダル ===== -->
+<!-- ===== 共通もぎりチケットモーダル ===== -->
 <div id="ticket-modal">
   <div class="ticket-wrapper">
     <div class="ticket-main">
       <div class="ticket-header-ribbon">
         <div class="ticket-shop">🐴 うましか公式 OFFICIAL TICKET</div>
-        <div class="ticket-no" id="modal-ticket-no">NO. 2026-COUPON</div>
+        <div class="ticket-no" id="modal-ticket-no">NO. 2026-TICKET</div>
       </div>
-      <div class="ticket-title">イベント・グッズ限定ご優待</div>
-      <div class="ticket-amount">500円 OFF クーポン</div>
-      <div class="ticket-desc">
-        ・イベント観劇またはグッズご購入時にレジにてご提示ください。<br>
+      <div class="ticket-title" id="modal-ticket-subtitle">イベント・グッズ限定ご優待</div>
+      <div class="ticket-amount" id="modal-ticket-title">500円 OFF クーポン</div>
+      <div class="ticket-holder" id="modal-ticket-holder"></div>
+      <div class="ticket-desc" id="modal-ticket-desc">
+        ・イベントまたはグッズご購入時にレジにてご提示ください。<br>
         ・本券1枚につき500円割引としてご利用いただけます。（当日より利用可能）
       </div>
       <div class="used-stamp" id="modal-used-stamp">
@@ -336,7 +333,7 @@
       </div>
     </div>
 
-    <button class="modal-close-btn" onclick="closeCouponTicket()">閉じる</button>
+    <button class="modal-close-btn" onclick="closeTicketModal()">閉じる</button>
   </div>
 </div>
 
@@ -349,18 +346,27 @@
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxoKyVIAZfpHYh4JLh9iOfH3zHZ347IWmmDom_uZ6oD78zWJr0rqacXX2dDsKUENwo4/exec';
 
-let activeCoupons = [];
 let currentCardData = null;
-let checkStatusInterval = null;
 
-// 複数クーポン配列保存用ストレージキー
-// データ構造: [{ id: "cp_1700000000000", grantedAt: 1700000000000, usedAt: null }, ...]
-const COUPONS_LIST_KEY = 'umashika_coupons_list';
-// 旧データの移行用キー
+// 全チケット統合ストレージキー
+// データ構造:
+// {
+//   id: "tk_...",
+//   kind: "coupon500" | "point_reward",
+//   category: "イベント・グッズ限定" | "ポイント交換特典",
+//   title: "500円引きクーポン" | "グッズ 100円引き" | "ガチャガチャ 1回無料" | "観劇 500円引き",
+//   desc: "...",
+//   reservationName: "山田太郎" (任意),
+//   grantedAt: 1700000000000,
+//   usedAt: null | 1700000000000
+// }
+const TICKETS_LIST_KEY = 'umashika_all_tickets_list';
+// 旧ストレージキー（自動引き継ぎ用）
+const LEGACY_COUPONS_KEY = 'umashika_coupons_list';
 const LEGACY_GRANTED_KEY = 'umashika_coupon_granted';
 const LEGACY_USED_KEY = 'umashika_coupon_used_time';
 
-let currentOpenCouponId = null;
+let currentOpenTicketId = null;
 
 const _rawHref = window.location.href;
 
@@ -391,30 +397,62 @@ function getParam(key) {
   return null;
 }
 
-// クーポン配列の読み込み（旧形式データがあれば自動移行）
-function getStoredCoupons() {
+// チケット配列の読み込み（旧形式データがあれば自動統合）
+function getStoredTickets() {
   let list = [];
   try {
-    const raw = localStorage.getItem(COUPONS_LIST_KEY);
+    const raw = localStorage.getItem(TICKETS_LIST_KEY);
     if (raw) list = JSON.parse(raw);
   } catch(e) { list = []; }
 
+  let migrated = false;
+
+  // 旧複数クーポンリストからの移行
+  try {
+    const oldMultiRaw = localStorage.getItem(LEGACY_COUPONS_KEY);
+    if (oldMultiRaw) {
+      const oldMulti = JSON.parse(oldMultiRaw);
+      oldMulti.forEach(item => {
+        list.push({
+          id: item.id || ('tk_' + Date.now() + '_' + Math.random()),
+          kind: 'coupon500',
+          category: 'イベント・グッズ限定',
+          title: '500円引きクーポン',
+          desc: '・イベントまたはグッズご購入時にレジにてご提示ください。<br>・本券1枚につき500円割引としてご利用いただけます。（当日より利用可能）',
+          reservationName: '',
+          grantedAt: item.grantedAt || Date.now(),
+          usedAt: item.usedAt || null
+        });
+      });
+      localStorage.removeItem(LEGACY_COUPONS_KEY);
+      migrated = true;
+    }
+  } catch(e) {}
+
+  // 最古の単一クーポンからの移行
   if (localStorage.getItem(LEGACY_GRANTED_KEY)) {
     const legacyUsed = localStorage.getItem(LEGACY_USED_KEY);
     list.push({
-      id: 'cp_legacy_' + Date.now(),
+      id: 'tk_legacy_' + Date.now(),
+      kind: 'coupon500',
+      category: 'イベント・グッズ限定',
+      title: '500円引きクーポン',
+      desc: '・イベントまたはグッズご購入時にレジにてご提示ください。<br>・本券1枚につき500円割引としてご利用いただけます。（当日より利用可能）',
+      reservationName: '',
       grantedAt: Date.now(),
       usedAt: legacyUsed ? parseInt(legacyUsed, 10) : null
     });
     localStorage.removeItem(LEGACY_GRANTED_KEY);
     localStorage.removeItem(LEGACY_USED_KEY);
-    saveStoredCoupons(list);
+    migrated = true;
   }
+
+  if (migrated) saveStoredTickets(list);
   return list;
 }
 
-function saveStoredCoupons(list) {
-  localStorage.setItem(COUPONS_LIST_KEY, JSON.stringify(list));
+function saveStoredTickets(list) {
+  localStorage.setItem(TICKETS_LIST_KEY, JSON.stringify(list));
 }
 
 liff.init({ liffId: "2010459570-8NHozdMT" }).then(() => {
@@ -448,36 +486,39 @@ async function handleStartup() {
     // 2. スタッフ提示の「500円クーポン付与QR」または「リセット」
     let grantedNow = false;
     if (action === 'reset_coupon') {
-      localStorage.removeItem(COUPONS_LIST_KEY);
+      localStorage.removeItem(TICKETS_LIST_KEY);
+      localStorage.removeItem(LEGACY_COUPONS_KEY);
       localStorage.removeItem(LEGACY_GRANTED_KEY);
       localStorage.removeItem(LEGACY_USED_KEY);
-      alert('🔄 クーポンのテスト履歴をすべてリセットしました！');
+      alert('🔄 チケットのテスト履歴をすべてリセットしました！');
     }
 
     if (action === 'grant_wchance' || action === 'grant_coupon') {
-      // 重複リロードによる連続付与を防ぐため、URLのtoken（またはタイムスタンプ制御）があればチェック
-      // スタッフQRを読み取るたびに新しい1枚を追加
-      const list = getStoredCoupons();
-      const newCoupon = {
-        id: 'cp_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      const list = getStoredTickets();
+      const newTicket = {
+        id: 'tk_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        kind: 'coupon500',
+        category: 'イベント・グッズ限定',
+        title: '500円引きクーポン',
+        desc: '・イベントまたはグッズご購入時にレジにてご提示ください。<br>・本券1枚につき500円割引としてご利用いただけます。（当日より利用可能）',
+        reservationName: '',
         grantedAt: Date.now(),
         usedAt: null
       };
-      list.push(newCoupon);
-      saveStoredCoupons(list);
+      list.push(newTicket);
+      saveStoredTickets(list);
       grantedNow = true;
 
-      // URLからパラメータを消去してブラウザ更新（F5）での誤重複付与を防止
       if (window.history && window.history.replaceState) {
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState(null, '', cleanUrl);
+        window.history.replaceState(null, '', window.location.pathname);
       }
 
-      alert('🎉 イベント・グッズ限定「500円引きクーポン」を獲得しました！\n（現在所持数：' + getValidCoupons().length + '枚）\n特典タブから当日すぐにご利用いただけます。');
+      alert('🎉 イベント・グッズ限定「500円引きクーポン」を獲得しました！
+特典タブから当日すぐにご利用いただけます。');
     }
 
     await loadData();
-    renderGrantedCoupons();
+    renderOwnedTickets();
     document.getElementById('loading').style.display = 'none';
 
     if (grantedNow || action === 'grant_wchance' || action === 'grant_coupon') {
@@ -488,54 +529,69 @@ async function handleStartup() {
   }
 }
 
-// 有効なクーポン一覧を取得（使用後2時間以上経過したものは除外、未使用は絶対消えない）
-function getValidCoupons() {
-  const list = getStoredCoupons();
+// 有効な全チケット取得（未使用は絶対消えない / 使用済は2時間経過で自動消去）
+function getValidTickets() {
+  const list = getStoredTickets();
   const now = Date.now();
-  const validList = list.filter(cp => {
-    if (!cp.usedAt) {
+  const validList = list.filter(tk => {
+    if (!tk.usedAt) {
       // 未使用の場合は絶対に消えない
       return true;
     }
-    // 使用済みの場合は2時間（7200000ミリ秒）未満なら表示、2時間以上で自動消去
-    const elapsedHours = (now - cp.usedAt) / (1000 * 60 * 60);
+    // 使用済みの場合は2時間未満なら表示、2時間経過で自動消去
+    const elapsedHours = (now - tk.usedAt) / (1000 * 60 * 60);
     return elapsedHours < 2;
   });
 
-  // 期限切れ（使用後2時間経過）が除去されていたらストレージも整理
   if (validList.length !== list.length) {
-    saveStoredCoupons(validList);
+    saveStoredTickets(validList);
   }
   return validList;
 }
 
-// 複数クーポンの枠を特典タブに描画
-function renderGrantedCoupons() {
-  const container = document.getElementById('granted-coupons-container');
-  const validCoupons = getValidCoupons();
+// 所持中の全チケット（500円クーポン＋ポイント交換特典チケット）を特典タブに描画
+function renderOwnedTickets() {
+  const card = document.getElementById('owned-tickets-card');
+  const listContainer = document.getElementById('owned-tickets-list');
+  const validTickets = getValidTickets();
 
-  if (validCoupons.length === 0) {
-    container.innerHTML = '';
+  if (validTickets.length === 0) {
+    card.style.display = 'none';
+    listContainer.innerHTML = '';
     return;
   }
 
-  container.innerHTML = validCoupons.map((cp, index) => {
-    const isUsed = Boolean(cp.usedAt);
-    const numLabel = validCoupons.length > 1 ? `（${index + 1}枚目）` : '';
+  card.style.display = 'block';
+  listContainer.innerHTML = validTickets.map((tk, index) => {
+    const isUsed = Boolean(tk.usedAt);
+    const isPointReward = tk.kind === 'point_reward';
+    const badgeColor = isUsed ? '#64748b' : (isPointReward ? '#005bac' : '#ff2f92');
+    const bgColor = isUsed ? '#f8fafc' : (isPointReward ? '#f0f7ff' : '#fff5f8');
+    const borderColor = isUsed ? '#cbd5e1' : (isPointReward ? '#005bac' : '#ff2f92');
+    const btnClass = isPointReward ? 'btn-ticket-blue' : 'btn-ticket';
+
     return `
-      <div class="reward-item" style="background: ${isUsed ? '#f8fafc' : '#fff5f8'}; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 2px solid ${isUsed ? '#cbd5e1' : '#ff2f92'};">
-        <div>
-          <div style="font-size: 11px; font-weight: bold; color: ${isUsed ? '#64748b' : '#ff2f92'};">イベント・グッズ限定 ${numLabel}</div>
-          <div class="reward-name" style="font-weight: bold; color: #1b2140;">500円引きクーポン</div>
+      <div class="reward-item" style="background: ${bgColor}; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 2px solid ${borderColor};">
+        <div style="padding-right: 8px;">
+          <div style="font-size: 11px; font-weight: bold; color: ${badgeColor};">${tk.category}</div>
+          <div class="reward-name" style="font-weight: bold; color: #1b2140;">${tk.title}</div>
+          ${tk.reservationName ? `<div style="font-size: 11px; color: #475569; margin-top: 2px;">予約名：${escapeHtml(tk.reservationName)} 様</div>` : ''}
         </div>
-        <button class="reward-btn btn-coupon" 
-                style="background: ${isUsed ? '#94a3b8' : 'linear-gradient(135deg, #ff2f92, #b0005f)'};"
-                onclick="openCouponTicket('${cp.id}', ${index + 1})">
+        <button class="reward-btn ${btnClass}" 
+                style="${isUsed ? 'background: #94a3b8;' : ''}"
+                onclick="openTicketModal('${tk.id}', ${index + 1})">
           ${isUsed ? '使用済み' : 'チケットを開く'}
         </button>
       </div>
     `;
   }).join('');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>"']/g, function(m) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+  });
 }
 
 async function loadData() {
@@ -559,124 +615,90 @@ function updateUI(data) {
 }
 
 function renderRewardsList(currentPoints) {
-  renderGrantedCoupons();
+  renderOwnedTickets();
 
   const rewardList = document.getElementById('rewards-list');
   rewardList.innerHTML = '';
-  const REWARD_CONF = { 5: 'グッズ 100円引き', 10: 'ガチャガチャ 1回無料', 15: '観劇 500円引き' };
+  const REWARD_CONF = {
+    5:  { label: 'グッズ 100円引き', desc: '・グッズご購入時にレジにてご提示ください。<br>・本券1枚につき100円割引としてご利用いただけます。' },
+    10: { label: 'ガチャガチャ 1回無料', desc: '・会場内のガチャガチャコーナーにてスタッフにご提示ください。<br>・本券1枚につき1回無料でご利用いただけます。' },
+    15: { label: '観劇 500円引き', desc: '・受付にてスタッフにご提示ください。<br>・本券1枚につき500円割引としてご利用いただけます。' }
+  };
+
   Object.keys(REWARD_CONF).forEach(pts => {
     const pointsNum = parseInt(pts);
     const canUse = currentPoints >= pointsNum;
     const item = document.createElement('div');
     item.className = 'reward-item';
     item.innerHTML = `
-      <span class="reward-name">${REWARD_CONF[pts]} (${pts}pt)</span>
+      <span class="reward-name">${REWARD_CONF[pts].label} (${pts}pt)</span>
       <button class="reward-btn ${canUse ? 'btn-use' : 'btn-lock'}"
-              onclick="${canUse ? `useCoupon(${pointsNum}, '${REWARD_CONF[pts]}')` : ''}">
-        ${canUse ? '使用する' : '不足'}
+              onclick="${canUse ? `exchangePointTicket(${pointsNum}, '${REWARD_CONF[pts].label}', '${REWARD_CONF[pts].desc}')` : ''}">
+        ${canUse ? 'チケット交換' : '不足'}
       </button>
     `;
     rewardList.appendChild(item);
   });
-
-  const activeCard = document.getElementById('active-coupons-card');
-  const activeListContainer = document.getElementById('active-coupons-list');
-  if (activeCoupons.length > 0) {
-    activeListContainer.innerHTML = activeCoupons.map((coupon, index) => `
-      <div class="active-coupon-item">
-        <span class="active-coupon-name">${coupon.label}</span>
-        <button class="btn-resume" onclick="resumeActiveQR(${index})">QR表示</button>
-      </div>
-    `).join('');
-    activeCard.style.display = 'block';
-  } else {
-    activeCard.style.display = 'none';
-  }
 }
 
-async function useCoupon(pts, label) {
-  const msg = `おめでとうございます！
-特典内容：${label}
+// ポイント特典を交換して「もぎりチケット」として発行する
+async function exchangePointTicket(pts, label, desc) {
+  const msg = `特典内容：${label}（${pts}pt消費）
 
-※確認のため予約者名のご入力お願いします`;
+※確認のため公演を予約したお名前をご入力お願いします`;
   const name = prompt(msg);
-  if (!name) return;
+  if (!name || !name.trim()) return;
 
   document.getElementById('loading').style.display = 'flex';
-  document.getElementById('loading').innerText = '特典を交換中...';
+  document.getElementById('loading').innerText = 'チケットを発行中...';
 
   try {
+    // サーバー側のポイント減算＆履歴記録を実行
     const res = await apiPost({
       action: 'generate_coupon',
       line_user_id: liff.getContext().userId,
       display_name: (await liff.getProfile()).displayName,
-      reservation_name: name,
+      reservation_name: name.trim(),
       use_points: pts
     });
 
     if (res.success) {
-      activeCoupons.push({ url: res.qr_url, label: label, pts: pts });
-      if (currentCardData) { currentCardData.current_points -= pts; updateUI(currentCardData); }
+      if (currentCardData) {
+        currentCardData.current_points -= pts;
+        updateUI(currentCardData);
+      }
+
+      // 発行されたチケットをローカル一覧に保存（未使用時は絶対消えず、使用後2時間で自動消去）
+      const list = getStoredTickets();
+      const newTicket = {
+        id: 'tk_pt_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        kind: 'point_reward',
+        category: `ポイント交換特典（${pts}pt）`,
+        title: label,
+        desc: desc,
+        reservationName: name.trim(),
+        grantedAt: Date.now(),
+        usedAt: null
+      };
+      list.push(newTicket);
+      saveStoredTickets(list);
+
       document.getElementById('loading').style.display = 'none';
       document.getElementById('loading').innerText = '読み込み中...';
-      showPage('qr');
-      document.getElementById('qr-title').innerText = label;
-      document.getElementById('qrcode').innerHTML = '';
-      new QRCode(document.getElementById("qrcode"), { text: res.qr_url, width: 200, height: 200 });
-      startCheckingStatus(res.qr_url);
+      renderOwnedTickets();
+
+      alert(`🎫 「${label}」のチケットを発行しました！
+画面上部の「所持中のチケット」から開いてスタッフにご提示ください。`);
+      // そのままチケットを開いて見せる
+      openTicketModal(newTicket.id, getValidTickets().length);
     } else {
       document.getElementById('loading').style.display = 'none';
       alert(res.error);
-      showPage('rewards');
     }
   } catch (err) {
     document.getElementById('loading').style.display = 'none';
-    alert("QRコードの作成に失敗しました。");
-    showPage('rewards');
+    alert("チケットの発行に失敗しました。通信環境をご確認ください。");
   }
-}
-
-function resumeActiveQR(index) {
-  const coupon = activeCoupons[index];
-  if (!coupon) return;
-  showPage('qr');
-  document.getElementById('qr-title').innerText = coupon.label;
-  document.getElementById('qrcode').innerHTML = '';
-  new QRCode(document.getElementById("qrcode"), { text: coupon.url, width: 200, height: 200 });
-  startCheckingStatus(coupon.url);
-}
-
-function startCheckingStatus(token) {
-  if (checkStatusInterval) clearInterval(checkStatusInterval);
-  checkStatusInterval = setInterval(async () => {
-    try {
-      const res = await apiPost({ action: 'check_coupon_status', token: token });
-      if (res.success && res.status === 'used') {
-        clearInterval(checkStatusInterval);
-        checkStatusInterval = null;
-        await loadData();
-        activeCoupons = [];
-        document.getElementById('qrcode').innerHTML = `
-          <div style="text-align:center; padding:30px 10px; background:#f0fdf4; border:2px solid #22c55e; border-radius:12px; margin-top:15px;">
-            <div style="font-size:40px;">✅</div>
-            <div style="color:#15803d; font-size:18px; font-weight:bold; margin:10px 0;">特典を使用しました</div>
-            <div style="font-size:13px; color:#666;">ポイントが更新されました</div>
-          </div>
-        `;
-        setTimeout(() => {
-          cancelQR();
-          switchTab('history');
-        }, 2500);
-      }
-    } catch(e) {}
-  }, 3000);
-}
-
-function cancelQR() {
-  if (checkStatusInterval) clearInterval(checkStatusInterval);
-  checkStatusInterval = null;
-  showPage('rewards');
-  if (currentCardData) renderRewardsList(currentCardData.current_points);
 }
 
 function showPage(name) {
@@ -737,34 +759,45 @@ function showError(msg) {
   document.getElementById('loading').innerHTML = `<div style="color:red;padding:20px;text-align:center;">${msg}</div>`;
 }
 
-// ===== 複数クーポン対応・もぎりチケットモーダル処理 =====
-function openCouponTicket(couponId, ticketIndex) {
-  currentOpenCouponId = couponId;
+// ===== 共通もぎりチケットモーダル処理 =====
+function openTicketModal(ticketId, ticketIndex) {
+  const list = getStoredTickets();
+  const target = list.find(t => t.id === ticketId);
+  if (!target) return;
+
+  currentOpenTicketId = ticketId;
   const modal = document.getElementById('ticket-modal');
-  const ticketNoEl = document.getElementById('modal-ticket-no');
-  ticketNoEl.textContent = `NO. 2026-CP-${String(ticketIndex).padStart(2, '0')}`;
   
+  document.getElementById('modal-ticket-no').textContent = `NO. 2026-TK-${String(ticketIndex).padStart(2, '0')}`;
+  document.getElementById('modal-ticket-subtitle').textContent = target.category;
+  document.getElementById('modal-ticket-title').textContent = target.title;
+  document.getElementById('modal-ticket-desc').innerHTML = target.desc;
+
+  const holderEl = document.getElementById('modal-ticket-holder');
+  if (target.reservationName) {
+    holderEl.style.display = 'inline-block';
+    holderEl.textContent = `ご予約名：${target.reservationName} 様`;
+  } else {
+    holderEl.style.display = 'none';
+  }
+
   modal.style.display = 'flex';
-  checkCouponUsedState(couponId);
+  checkTicketUsedState(target);
 }
 
-function closeCouponTicket() {
-  currentOpenCouponId = null;
+function closeTicketModal() {
+  currentOpenTicketId = null;
   document.getElementById('ticket-modal').style.display = 'none';
-  renderGrantedCoupons();
+  renderOwnedTickets();
 }
 
-function checkCouponUsedState(couponId) {
+function checkTicketUsedState(target) {
   const stub = document.getElementById('modal-ticket-stub');
   const perf = document.getElementById('modal-perforation');
   const stamp = document.getElementById('modal-used-stamp');
   const dateEl = document.getElementById('modal-used-date');
   const knob = document.getElementById('modal-swipe-knob');
 
-  const list = getStoredCoupons();
-  const target = list.find(c => c.id === couponId);
-
-  // ノブの位置初期化
   knob.style.transition = 'none';
   knob.style.transform = 'translateX(0px)';
 
@@ -800,9 +833,9 @@ let startX = 0;
 let currentX = 0;
 
 knob.addEventListener('pointerdown', (e) => {
-  if (!currentOpenCouponId) return;
-  const list = getStoredCoupons();
-  const target = list.find(c => c.id === currentOpenCouponId);
+  if (!currentOpenTicketId) return;
+  const list = getStoredTickets();
+  const target = list.find(t => t.id === currentOpenTicketId);
   if (target && target.usedAt) return;
 
   isDragging = true;
@@ -830,13 +863,13 @@ knob.addEventListener('pointerup', (e) => {
   knob.style.transition = 'transform 0.3s ease';
   stub.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease';
 
-  if (currentX >= maxSlide * 0.8 && currentOpenCouponId) {
+  if (currentX >= maxSlide * 0.8 && currentOpenTicketId) {
     const nowTime = Date.now();
-    const list = getStoredCoupons();
-    const targetIndex = list.findIndex(c => c.id === currentOpenCouponId);
+    const list = getStoredTickets();
+    const targetIndex = list.findIndex(t => t.id === currentOpenTicketId);
     if (targetIndex !== -1) {
       list[targetIndex].usedAt = nowTime;
-      saveStoredCoupons(list);
+      saveStoredTickets(list);
     }
     
     const now = new Date(nowTime);
@@ -847,7 +880,7 @@ knob.addEventListener('pointerup', (e) => {
     dateEl.textContent = formatted;
     setTimeout(() => {
       stamp.classList.add('show');
-      renderGrantedCoupons();
+      renderOwnedTickets();
     }, 200);
   } else {
     knob.style.transform = 'translateX(0px)';
