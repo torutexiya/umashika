@@ -8,6 +8,19 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #f4f7f9; min-height: 100vh; padding-bottom: 70px; }
+  
+  /* ローディング画面（バグ防止のため確実に消える設計） */
+  #loading {
+    position: fixed; inset: 0; background: rgba(255, 255, 255, 0.95);
+    z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 15px; color: #005bac; font-weight: bold; gap: 12px;
+  }
+  .spinner {
+    width: 36px; height: 36px; border: 4px solid #e2e8f0; border-top-color: #005bac;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   .header { background: #005bac; padding: 14px 16px; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; z-index: 100; gap: 12px; }
   .header-illustration { font-size: 22px; display: flex; align-items: center; }
   .header-title { color: #fff; font-size: 18px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
@@ -246,7 +259,10 @@
 </head>
 <body>
 
-<div id="loading">読み込み中...</div>
+<div id="loading">
+  <div class="spinner"></div>
+  <span>読み込み中...</span>
+</div>
 
 <div class="header">
   <span class="header-illustration">🐴</span>
@@ -267,7 +283,6 @@
   </div>
 
   <div id="page-rewards" class="page">
-    <!-- 所持中のチケット一覧枠（付与された500円クーポン ＆ ポイントで交換した特典チケット） -->
     <div class="card" id="owned-tickets-card" style="display: none; border: 2px solid #ff2f92; background: #fff9fc;">
       <h3 style="margin-bottom: 10px; font-size: 15px; color: #b0005f;">🎫 所持中のチケット（未使用・使用後2時間以内）</h3>
       <div id="owned-tickets-list"></div>
@@ -348,20 +363,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxoKyVIAZfpHYh4JLh9iOfH
 
 let currentCardData = null;
 
-// 全チケット統合ストレージキー
-// データ構造:
-// {
-//   id: "tk_...",
-//   kind: "coupon500" | "point_reward",
-//   category: "イベント・グッズ限定" | "ポイント交換特典",
-//   title: "500円引きクーポン" | "グッズ 100円引き" | "ガチャガチャ 1回無料" | "観劇 500円引き",
-//   desc: "...",
-//   reservationName: "山田太郎" (任意),
-//   grantedAt: 1700000000000,
-//   usedAt: null | 1700000000000
-// }
 const TICKETS_LIST_KEY = 'umashika_all_tickets_list';
-// 旧ストレージキー（自動引き継ぎ用）
 const LEGACY_COUPONS_KEY = 'umashika_coupons_list';
 const LEGACY_GRANTED_KEY = 'umashika_coupon_granted';
 const LEGACY_USED_KEY = 'umashika_coupon_used_time';
@@ -397,7 +399,6 @@ function getParam(key) {
   return null;
 }
 
-// チケット配列の読み込み（旧形式データがあれば自動統合）
 function getStoredTickets() {
   let list = [];
   try {
@@ -406,8 +407,6 @@ function getStoredTickets() {
   } catch(e) { list = []; }
 
   let migrated = false;
-
-  // 旧複数クーポンリストからの移行
   try {
     const oldMultiRaw = localStorage.getItem(LEGACY_COUPONS_KEY);
     if (oldMultiRaw) {
@@ -429,7 +428,6 @@ function getStoredTickets() {
     }
   } catch(e) {}
 
-  // 最古の単一クーポンからの移行
   if (localStorage.getItem(LEGACY_GRANTED_KEY)) {
     const legacyUsed = localStorage.getItem(LEGACY_USED_KEY);
     list.push({
@@ -455,18 +453,29 @@ function saveStoredTickets(list) {
   localStorage.setItem(TICKETS_LIST_KEY, JSON.stringify(list));
 }
 
-liff.init({ liffId: "2010459570-8NHozdMT" }).then(() => {
-  if (!liff.isLoggedIn()) { liff.login(); } else { handleStartup(); }
-}).catch(err => showError("LIFF初期化失敗: " + err));
+// LIFF初期化＆起動処理（エラー発生時も必ずローディングが消える安全設計）
+liff.init({ liffId: "2010459570-8NHozdMT" }).then(async () => {
+  if (!liff.isLoggedIn()) {
+    liff.login();
+  } else {
+    await handleStartup();
+  }
+}).catch(err => {
+  console.error("LIFF初期化エラー:", err);
+  showError("LIFF初期化失敗: " + err);
+}).finally(() => {
+  // どんな状況でも必ずローディング画面を非表示にする
+  const loader = document.getElementById('loading');
+  if (loader) loader.style.display = 'none';
+});
 
 async function handleStartup() {
-  const context = liff.getContext();
-  const profile = await liff.getProfile();
-  const action = getParam('action');
-  const baseParams = { line_user_id: context.userId, display_name: profile.displayName };
-
   try {
-    // 1. 通常のポイント付与QR読み込み
+    const context = liff.getContext();
+    const profile = await liff.getProfile();
+    const action = getParam('action');
+    const baseParams = { line_user_id: context.userId, display_name: profile.displayName };
+
     if (action === 'add_points') {
       const pts   = getParam('points')   || '1';
       const evtId = getParam('event_id') || 'QRスキャン';
@@ -483,7 +492,6 @@ async function handleStartup() {
       }
     }
 
-    // 2. スタッフ提示の「500円クーポン付与QR」または「リセット」
     let grantedNow = false;
     if (action === 'reset_coupon') {
       localStorage.removeItem(TICKETS_LIST_KEY);
@@ -513,32 +521,25 @@ async function handleStartup() {
         window.history.replaceState(null, '', window.location.pathname);
       }
 
-      alert('🎉 イベント・グッズ限定「500円引きクーポン」を獲得しました！
-特典タブから当日すぐにご利用いただけます。');
+      alert('🎉 イベント・グッズ限定「500円引きクーポン」を獲得しました！\n特典タブから当日すぐにご利用いただけます。');
     }
 
     await loadData();
     renderOwnedTickets();
-    document.getElementById('loading').style.display = 'none';
 
     if (grantedNow || action === 'grant_wchance' || action === 'grant_coupon') {
       switchTab('rewards');
     }
   } catch (err) {
-    showError("通信エラー: " + err);
+    console.error("起動処理エラー:", err);
   }
 }
 
-// 有効な全チケット取得（未使用は絶対消えない / 使用済は2時間経過で自動消去）
 function getValidTickets() {
   const list = getStoredTickets();
   const now = Date.now();
   const validList = list.filter(tk => {
-    if (!tk.usedAt) {
-      // 未使用の場合は絶対に消えない
-      return true;
-    }
-    // 使用済みの場合は2時間未満なら表示、2時間経過で自動消去
+    if (!tk.usedAt) return true;
     const elapsedHours = (now - tk.usedAt) / (1000 * 60 * 60);
     return elapsedHours < 2;
   });
@@ -549,7 +550,6 @@ function getValidTickets() {
   return validList;
 }
 
-// 所持中の全チケット（500円クーポン＋ポイント交換特典チケット）を特典タブに描画
 function renderOwnedTickets() {
   const card = document.getElementById('owned-tickets-card');
   const listContainer = document.getElementById('owned-tickets-list');
@@ -595,9 +595,14 @@ function escapeHtml(str) {
 }
 
 async function loadData() {
-  const context = liff.getContext();
-  const res = await apiPost({ action: 'get_card', line_user_id: context.userId });
-  if (res.success) { currentCardData = res; updateUI(res); } else { showError(res.error); }
+  try {
+    const context = liff.getContext();
+    const res = await apiPost({ action: 'get_card', line_user_id: context.userId });
+    if (res.success) {
+      currentCardData = res;
+      updateUI(res);
+    }
+  } catch(e) {}
 }
 
 function updateUI(data) {
@@ -641,19 +646,16 @@ function renderRewardsList(currentPoints) {
   });
 }
 
-// ポイント特典を交換して「もぎりチケット」として発行する
 async function exchangePointTicket(pts, label, desc) {
-  const msg = `特典内容：${label}（${pts}pt消費）
-
-※確認のため公演を予約したお名前をご入力お願いします`;
+  const msg = `特典内容：${label}（${pts}pt消費）\n\n※確認のため公演を予約したお名前をご入力お願いします`;
   const name = prompt(msg);
   if (!name || !name.trim()) return;
 
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('loading').innerText = 'チケットを発行中...';
+  const loader = document.getElementById('loading');
+  loader.style.display = 'flex';
+  loader.querySelector('span').innerText = 'チケットを発行中...';
 
   try {
-    // サーバー側のポイント減算＆履歴記録を実行
     const res = await apiPost({
       action: 'generate_coupon',
       line_user_id: liff.getContext().userId,
@@ -668,7 +670,6 @@ async function exchangePointTicket(pts, label, desc) {
         updateUI(currentCardData);
       }
 
-      // 発行されたチケットをローカル一覧に保存（未使用時は絶対消えず、使用後2時間で自動消去）
       const list = getStoredTickets();
       const newTicket = {
         id: 'tk_pt_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
@@ -683,21 +684,17 @@ async function exchangePointTicket(pts, label, desc) {
       list.push(newTicket);
       saveStoredTickets(list);
 
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('loading').innerText = '読み込み中...';
       renderOwnedTickets();
-
-      alert(`🎫 「${label}」のチケットを発行しました！
-画面上部の「所持中のチケット」から開いてスタッフにご提示ください。`);
-      // そのままチケットを開いて見せる
+      alert(`🎫 「${label}」のチケットを発行しました！\n画面上部の「所持中のチケット」から開いてスタッフにご提示ください。`);
       openTicketModal(newTicket.id, getValidTickets().length);
     } else {
-      document.getElementById('loading').style.display = 'none';
       alert(res.error);
     }
   } catch (err) {
-    document.getElementById('loading').style.display = 'none';
     alert("チケットの発行に失敗しました。通信環境をご確認ください。");
+  } finally {
+    loader.style.display = 'none';
+    loader.querySelector('span').innerText = '読み込み中...';
   }
 }
 
@@ -756,10 +753,12 @@ async function apiPost(data) {
 }
 
 function showError(msg) {
-  document.getElementById('loading').innerHTML = `<div style="color:red;padding:20px;text-align:center;">${msg}</div>`;
+  const loader = document.getElementById('loading');
+  loader.innerHTML = `<div style="color:red;padding:20px;text-align:center;">${msg}</div>`;
+  loader.style.display = 'flex';
 }
 
-// ===== 共通もぎりチケットモーダル処理 =====
+// ===== もぎりチケットモーダル処理 =====
 function openTicketModal(ticketId, ticketIndex) {
   const list = getStoredTickets();
   const target = list.find(t => t.id === ticketId);
