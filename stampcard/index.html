@@ -39,7 +39,7 @@
   .reward-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
   .btn-use { background: #005bac; color: #fff; }
   .btn-lock { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
-  .btn-wchance { background: linear-gradient(135deg, #ff2f92, #b0005f); color: #fff; }
+  .btn-coupon { background: linear-gradient(135deg, #ff2f92, #b0005f); color: #fff; }
   .active-coupon-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
   .active-coupon-item:last-child { border-bottom: none; }
   .active-coupon-name { font-size: 13px; color: #1e3a8a; font-weight: bold; }
@@ -88,19 +88,28 @@
   }
   .ticket-main::before { left: -15px; }
   .ticket-main::after { right: -15px; }
-  .ticket-shop { font-size: 12px; font-weight: 900; color: #ff2f92; margin-bottom: 2px; }
-  .ticket-title { font-size: 22px; font-weight: 900; color: #1b2140; margin: 4px 0 10px; }
+  .ticket-header-ribbon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+  .ticket-shop { font-size: 11px; font-weight: 900; color: #ff2f92; }
+  .ticket-no { font-size: 10px; font-family: monospace; font-weight: bold; color: #718096; background: #edf2f7; padding: 2px 6px; border-radius: 4px; }
+  .ticket-title { font-size: 18px; font-weight: 900; color: #1b2140; margin: 2px 0 8px; }
   .ticket-amount {
     display: inline-block;
     background: linear-gradient(135deg, #ffe46b, #f5a300);
     border: 3px solid #1b2140;
     border-radius: 10px;
     padding: 6px 14px;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 900;
     color: #1b2140;
     box-shadow: 2px 2px 0 #1b2140;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .ticket-desc {
     font-size: 11px;
@@ -145,9 +154,14 @@
   .staff-warn {
     font-size: 10px;
     font-weight: 900;
-    color: #d8132f;
-    margin-bottom: 6px;
-    text-align: center;
+    color: #b91c1c;
+    background: #fee2e2;
+    border: 1px solid #f87171;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    text-align: left;
   }
   .swipe-track {
     position: relative;
@@ -253,14 +267,8 @@
     <div class="card">
       <h3 style="margin-bottom: 15px; font-size: 16px; color: #334155;">利用可能な特典</h3>
       
-      <!-- スタッフ用QRコードを読み取った人だけに表示されるWチャンス賞品枠 -->
-      <div id="wchance-reward-box" class="reward-item" style="display: none; background: #fff5f8; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 2px solid #ff2f92;">
-        <div>
-          <div style="font-size: 11px; font-weight: bold; color: #ff2f92;">Wチャンス当選者限定</div>
-          <div class="reward-name" style="font-weight: bold; color: #1b2140;">Wチャンス賞品：500円クーポン</div>
-        </div>
-        <button id="wchance-open-btn" class="reward-btn btn-wchance" onclick="openWChanceTicket()">チケットを開く</button>
-      </div>
+      <!-- 複数クーポン対応コンテナ（持っている枚数分だけ動的に2個目・3個目の枠が並ぶ） -->
+      <div id="granted-coupons-container"></div>
 
       <div id="rewards-list"></div>
       
@@ -295,16 +303,19 @@
   </div>
 </div>
 
-<!-- ===== もぎり演出チケットモーダル ===== -->
+<!-- ===== 本格的もぎりチケットモーダル ===== -->
 <div id="ticket-modal">
   <div class="ticket-wrapper">
     <div class="ticket-main">
-      <div class="ticket-shop">🐴 うましか 🦌</div>
-      <div class="ticket-title">Wチャンス賞品</div>
-      <div class="ticket-amount">500円クーポン</div>
+      <div class="ticket-header-ribbon">
+        <div class="ticket-shop">🐴 うましか公式 OFFICIAL TICKET</div>
+        <div class="ticket-no" id="modal-ticket-no">NO. 2026-COUPON</div>
+      </div>
+      <div class="ticket-title">イベント・グッズ限定ご優待</div>
+      <div class="ticket-amount">500円 OFF クーポン</div>
       <div class="ticket-desc">
-        ・お会計時にスタッフへご提示ください。<br>
-        ・スタッフが右へスライドしてもぎると使用済みになります。
+        ・イベント観劇またはグッズご購入時にレジにてご提示ください。<br>
+        ・本券1枚につき500円割引としてご利用いただけます。（当日より利用可能）
       </div>
       <div class="used-stamp" id="modal-used-stamp">
         使用済み
@@ -315,14 +326,17 @@
     <div class="perforation" id="modal-perforation"></div>
     
     <div class="ticket-stub" id="modal-ticket-stub">
-      <div class="staff-warn">⚠️ スタッフ確認用（横にスワイプ）</div>
+      <div class="staff-warn">
+        <strong>【⚠️ スタッフ確認専用】</strong><br>
+        お客様単体での操作・もぎりは無効です。必ず<strong>店舗スタッフの面前</strong>で右へスライドしてもぎり操作を行ってください。
+      </div>
       <div class="swipe-track" id="modal-swipe-track">
-        <span class="swipe-text">右へスライドしてもぎる ➔</span>
+        <span class="swipe-text">スタッフが右へスライド ➔</span>
         <div class="swipe-knob" id="modal-swipe-knob">✂️</div>
       </div>
     </div>
 
-    <button class="modal-close-btn" onclick="closeWChanceTicket()">閉じる</button>
+    <button class="modal-close-btn" onclick="closeCouponTicket()">閉じる</button>
   </div>
 </div>
 
@@ -339,9 +353,14 @@ let activeCoupons = [];
 let currentCardData = null;
 let checkStatusInterval = null;
 
-// ストレージキー定義
-const WCHANCE_GRANTED_KEY = 'umashika_wchance_granted';
-const WCHANCE_USED_KEY = 'umashika_wchance_ticket_used';
+// 複数クーポン配列保存用ストレージキー
+// データ構造: [{ id: "cp_1700000000000", grantedAt: 1700000000000, usedAt: null }, ...]
+const COUPONS_LIST_KEY = 'umashika_coupons_list';
+// 旧データの移行用キー
+const LEGACY_GRANTED_KEY = 'umashika_coupon_granted';
+const LEGACY_USED_KEY = 'umashika_coupon_used_time';
+
+let currentOpenCouponId = null;
 
 const _rawHref = window.location.href;
 
@@ -372,6 +391,32 @@ function getParam(key) {
   return null;
 }
 
+// クーポン配列の読み込み（旧形式データがあれば自動移行）
+function getStoredCoupons() {
+  let list = [];
+  try {
+    const raw = localStorage.getItem(COUPONS_LIST_KEY);
+    if (raw) list = JSON.parse(raw);
+  } catch(e) { list = []; }
+
+  if (localStorage.getItem(LEGACY_GRANTED_KEY)) {
+    const legacyUsed = localStorage.getItem(LEGACY_USED_KEY);
+    list.push({
+      id: 'cp_legacy_' + Date.now(),
+      grantedAt: Date.now(),
+      usedAt: legacyUsed ? parseInt(legacyUsed, 10) : null
+    });
+    localStorage.removeItem(LEGACY_GRANTED_KEY);
+    localStorage.removeItem(LEGACY_USED_KEY);
+    saveStoredCoupons(list);
+  }
+  return list;
+}
+
+function saveStoredCoupons(list) {
+  localStorage.setItem(COUPONS_LIST_KEY, JSON.stringify(list));
+}
+
 liff.init({ liffId: "2010459570-8NHozdMT" }).then(() => {
   if (!liff.isLoggedIn()) { liff.login(); } else { handleStartup(); }
 }).catch(err => showError("LIFF初期化失敗: " + err));
@@ -400,29 +445,42 @@ async function handleStartup() {
       }
     }
 
-    // 2. スタッフ提示の「Wチャンス500円クーポン付与QR」読み込み（?action=grant_wchance）
+    // 2. スタッフ提示の「500円クーポン付与QR」または「リセット」
     let grantedNow = false;
-    if (action === 'reset_wchance') {
-      localStorage.removeItem(WCHANCE_GRANTED_KEY);
-      localStorage.removeItem(WCHANCE_USED_KEY);
-      alert('🔄 Wチャンスのテスト履歴をリセットしました！');
+    if (action === 'reset_coupon') {
+      localStorage.removeItem(COUPONS_LIST_KEY);
+      localStorage.removeItem(LEGACY_GRANTED_KEY);
+      localStorage.removeItem(LEGACY_USED_KEY);
+      alert('🔄 クーポンのテスト履歴をすべてリセットしました！');
     }
-    if (action === 'grant_wchance') {
-      if (!localStorage.getItem(WCHANCE_GRANTED_KEY)) {
-        localStorage.setItem(WCHANCE_GRANTED_KEY, 'true');
-        grantedNow = true;
-        alert('🎉 Wチャンス賞品「500円クーポン」を獲得しました！\n特典タブから確認できます。');
-      } else {
-        alert('すでにWチャンス賞品「500円クーポン」を受け取り済みです！');
+
+    if (action === 'grant_wchance' || action === 'grant_coupon') {
+      // 重複リロードによる連続付与を防ぐため、URLのtoken（またはタイムスタンプ制御）があればチェック
+      // スタッフQRを読み取るたびに新しい1枚を追加
+      const list = getStoredCoupons();
+      const newCoupon = {
+        id: 'cp_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        grantedAt: Date.now(),
+        usedAt: null
+      };
+      list.push(newCoupon);
+      saveStoredCoupons(list);
+      grantedNow = true;
+
+      // URLからパラメータを消去してブラウザ更新（F5）での誤重複付与を防止
+      if (window.history && window.history.replaceState) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState(null, '', cleanUrl);
       }
+
+      alert('🎉 イベント・グッズ限定「500円引きクーポン」を獲得しました！\n（現在所持数：' + getValidCoupons().length + '枚）\n特典タブから当日すぐにご利用いただけます。');
     }
 
     await loadData();
-    updateWChanceRewardVisibility();
+    renderGrantedCoupons();
     document.getElementById('loading').style.display = 'none';
 
-    // 付与された直後は自動的に「特典」タブを開いて見せる
-    if (grantedNow || action === 'grant_wchance') {
+    if (grantedNow || action === 'grant_wchance' || action === 'grant_coupon') {
       switchTab('rewards');
     }
   } catch (err) {
@@ -430,25 +488,54 @@ async function handleStartup() {
   }
 }
 
-// Wチャンス特典枠の表示・状態更新
-function updateWChanceRewardVisibility() {
-  const box = document.getElementById('wchance-reward-box');
-  const btn = document.getElementById('wchance-open-btn');
-  const isGranted = localStorage.getItem(WCHANCE_GRANTED_KEY);
-  const isUsed = localStorage.getItem(WCHANCE_USED_KEY);
-
-  if (isGranted) {
-    box.style.display = 'flex';
-    if (isUsed) {
-      btn.textContent = '使用済み';
-      btn.style.background = '#94a3b8';
-    } else {
-      btn.textContent = 'チケットを開く';
-      btn.style.background = 'linear-gradient(135deg, #ff2f92, #b0005f)';
+// 有効なクーポン一覧を取得（使用後2時間以上経過したものは除外、未使用は絶対消えない）
+function getValidCoupons() {
+  const list = getStoredCoupons();
+  const now = Date.now();
+  const validList = list.filter(cp => {
+    if (!cp.usedAt) {
+      // 未使用の場合は絶対に消えない
+      return true;
     }
-  } else {
-    box.style.display = 'none';
+    // 使用済みの場合は2時間（7200000ミリ秒）未満なら表示、2時間以上で自動消去
+    const elapsedHours = (now - cp.usedAt) / (1000 * 60 * 60);
+    return elapsedHours < 2;
+  });
+
+  // 期限切れ（使用後2時間経過）が除去されていたらストレージも整理
+  if (validList.length !== list.length) {
+    saveStoredCoupons(validList);
   }
+  return validList;
+}
+
+// 複数クーポンの枠を特典タブに描画
+function renderGrantedCoupons() {
+  const container = document.getElementById('granted-coupons-container');
+  const validCoupons = getValidCoupons();
+
+  if (validCoupons.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = validCoupons.map((cp, index) => {
+    const isUsed = Boolean(cp.usedAt);
+    const numLabel = validCoupons.length > 1 ? `（${index + 1}枚目）` : '';
+    return `
+      <div class="reward-item" style="background: ${isUsed ? '#f8fafc' : '#fff5f8'}; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 2px solid ${isUsed ? '#cbd5e1' : '#ff2f92'};">
+        <div>
+          <div style="font-size: 11px; font-weight: bold; color: ${isUsed ? '#64748b' : '#ff2f92'};">イベント・グッズ限定 ${numLabel}</div>
+          <div class="reward-name" style="font-weight: bold; color: #1b2140;">500円引きクーポン</div>
+        </div>
+        <button class="reward-btn btn-coupon" 
+                style="background: ${isUsed ? '#94a3b8' : 'linear-gradient(135deg, #ff2f92, #b0005f)'};"
+                onclick="openCouponTicket('${cp.id}', ${index + 1})">
+          ${isUsed ? '使用済み' : 'チケットを開く'}
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 
 async function loadData() {
@@ -472,7 +559,7 @@ function updateUI(data) {
 }
 
 function renderRewardsList(currentPoints) {
-  updateWChanceRewardVisibility();
+  renderGrantedCoupons();
 
   const rewardList = document.getElementById('rewards-list');
   rewardList.innerHTML = '';
@@ -508,7 +595,10 @@ function renderRewardsList(currentPoints) {
 }
 
 async function useCoupon(pts, label) {
-  const msg = `おめでとうございます！\n特典内容：${label}\n\n※確認のため予約者名のご入力お願いします`;
+  const msg = `おめでとうございます！
+特典内容：${label}
+
+※確認のため予約者名のご入力お願いします`;
   const name = prompt(msg);
   if (!name) return;
 
@@ -647,29 +737,44 @@ function showError(msg) {
   document.getElementById('loading').innerHTML = `<div style="color:red;padding:20px;text-align:center;">${msg}</div>`;
 }
 
-// ===== Wチャンスチケット＆もぎり演出ロジック =====
-function openWChanceTicket() {
+// ===== 複数クーポン対応・もぎりチケットモーダル処理 =====
+function openCouponTicket(couponId, ticketIndex) {
+  currentOpenCouponId = couponId;
   const modal = document.getElementById('ticket-modal');
+  const ticketNoEl = document.getElementById('modal-ticket-no');
+  ticketNoEl.textContent = `NO. 2026-CP-${String(ticketIndex).padStart(2, '0')}`;
+  
   modal.style.display = 'flex';
-  checkWChanceUsedState();
+  checkCouponUsedState(couponId);
 }
 
-function closeWChanceTicket() {
+function closeCouponTicket() {
+  currentOpenCouponId = null;
   document.getElementById('ticket-modal').style.display = 'none';
-  updateWChanceRewardVisibility();
+  renderGrantedCoupons();
 }
 
-function checkWChanceUsedState() {
+function checkCouponUsedState(couponId) {
   const stub = document.getElementById('modal-ticket-stub');
   const perf = document.getElementById('modal-perforation');
   const stamp = document.getElementById('modal-used-stamp');
   const dateEl = document.getElementById('modal-used-date');
+  const knob = document.getElementById('modal-swipe-knob');
 
-  const savedDate = localStorage.getItem(WCHANCE_USED_KEY);
-  if (savedDate) {
+  const list = getStoredCoupons();
+  const target = list.find(c => c.id === couponId);
+
+  // ノブの位置初期化
+  knob.style.transition = 'none';
+  knob.style.transform = 'translateX(0px)';
+
+  if (target && target.usedAt) {
+    const usedDate = new Date(target.usedAt);
+    const formatted = `${usedDate.getFullYear()}/${String(usedDate.getMonth()+1).padStart(2,'0')}/${String(usedDate.getDate()).padStart(2,'0')} ${String(usedDate.getHours()).padStart(2,'0')}:${String(usedDate.getMinutes()).padStart(2,'0')}`;
+    
     stub.style.display = 'none';
     perf.style.display = 'none';
-    dateEl.textContent = savedDate;
+    dateEl.textContent = formatted;
     stamp.classList.add('show');
   } else {
     stub.style.display = 'block';
@@ -695,7 +800,11 @@ let startX = 0;
 let currentX = 0;
 
 knob.addEventListener('pointerdown', (e) => {
-  if (localStorage.getItem(WCHANCE_USED_KEY)) return;
+  if (!currentOpenCouponId) return;
+  const list = getStoredCoupons();
+  const target = list.find(c => c.id === currentOpenCouponId);
+  if (target && target.usedAt) return;
+
   isDragging = true;
   startX = e.clientX;
   knob.style.transition = 'none';
@@ -721,18 +830,24 @@ knob.addEventListener('pointerup', (e) => {
   knob.style.transition = 'transform 0.3s ease';
   stub.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease';
 
-  if (currentX >= maxSlide * 0.8) {
-    const now = new Date();
+  if (currentX >= maxSlide * 0.8 && currentOpenCouponId) {
+    const nowTime = Date.now();
+    const list = getStoredCoupons();
+    const targetIndex = list.findIndex(c => c.id === currentOpenCouponId);
+    if (targetIndex !== -1) {
+      list[targetIndex].usedAt = nowTime;
+      saveStoredCoupons(list);
+    }
+    
+    const now = new Date(nowTime);
     const formatted = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    
-    localStorage.setItem(WCHANCE_USED_KEY, formatted);
-    
+
     stub.classList.add('torn');
     perf.style.opacity = '0';
     dateEl.textContent = formatted;
     setTimeout(() => {
       stamp.classList.add('show');
-      updateWChanceRewardVisibility();
+      renderGrantedCoupons();
     }, 200);
   } else {
     knob.style.transform = 'translateX(0px)';
